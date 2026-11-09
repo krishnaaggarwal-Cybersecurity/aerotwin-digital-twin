@@ -941,3 +941,37 @@ input[type=range] { accent-color: #147dba; }
   .dashboard-kpis .metric-card { min-height: 116px; }
   .dashboard-main > .panel:first-child .panel-note { font-size: 8px; }
 }
+
+.emergency-panel { border-color: #e6d5bd; background: linear-gradient(145deg, #fffdfa, #fff8f1); }
+.emergency-panel .panel-heading h2 { display: flex; align-items: center; gap: 9px; }
+.emergency-panel .panel-heading h2::before { width: 8px; height: 8px; border-radius: 50%; background: #d78a42; box-shadow: 0 0 0 4px #d78a4218; content: ''; }
+.emergency-status { display: inline-flex; align-items: center; gap: 7px; color: #825923; font: 600 9px var(--mono); letter-spacing: .06em; }
+.emergency-status i { width: 7px; height: 7px; border-radius: 50%; background: #d68b3b; }
+.emergency-summary { display: flex; align-items: center; gap: 15px; }
+.emergency-icon { display: grid; width: 44px; height: 44px; flex: none; place-items: center; border: 1px solid #e6c9a8; border-radius: 8px; color: #9c6030; background: #fff1df; }
+.emergency-summary > div { flex: 1; min-width: 0; }
+.emergency-summary > div > b { color: #4c3b2b; font-size: 14px; }
+.emergency-summary p { margin: 4px 0 0; color: #6b5b4b; font-size: 12px; line-height: 1.65; }
+.emergency-summary .button.danger { flex: none; border-color: #d6a779; color: #805127; background: #fff7ed; }
+.emergency-summary .button.danger:hover:not(:disabled) { border-color: #bd8751; background: #fff0dd; }
+.sos-preview { margin-top: 18px; padding: 17px; border: 1px solid #e8cfaa; border-radius: 8px; background: #fffaf1; }
+.sos-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid #efdfc5; }
+.sos-preview-heading > span { display: flex; align-items: center; gap: 8px; color: #855723; font: 600 10px var(--mono); letter-spacing: .08em; }
+.sos-preview dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; margin: 8px 0 12px; }
+.sos-preview dl > div { display: grid; gap: 4px; padding: 10px 0; border-bottom: 1px solid #efe2cf; }
+.sos-preview dt { color: #786956; font: 600 9px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.sos-preview dd { margin: 0; color: #493c2e; font-size: 12px; font-weight: 650; }
+.sos-preview > p { margin: 0; color: #705d46; font-size: 11px; line-height: 1.7; }
+.top-status > button[aria-label="Enable sound alerts"], .top-status > button[aria-label="Mute sound alerts"] { position: relative; }
+.top-status > button[aria-label="Mute sound alerts"] { border-color: #a9d8c8; color: #147253; background: #e7f6f0; }
+@media (max-width: 720px) {
+  .emergency-summary { align-items: flex-start; flex-wrap: wrap; }
+  .emergency-summary > div { flex-basis: calc(100% - 60px); }
+  .emergency-summary .button { margin-left: 59px; }
+}
+@media (max-width: 480px) {
+  .emergency-status { font-size: 8px; }
+  .sos-preview { padding: 13px; }
+  .sos-preview dl { grid-template-columns: 1fr; }
+  .sos-preview dd { font-size: 11px; }
+}

@@ -3,7 +3,7 @@ import {
   Activity, AlertTriangle, ArrowRight, BarChart3, Bot, Boxes, CheckCircle2,
   ChevronRight, CircleGauge, Clock3, Cog, Database, FileUp, Gauge, HeartPulse,
   History, Layers3, MapPin, Menu, MessageCircle, Moon, Network, Pause, Plane,
-  Play, Radar, RefreshCcw, Route, Satellite, Send, Settings2, ShieldAlert,
+  Play, Radar, RefreshCcw, Route, Satellite, Send, Settings2, ShieldAlert, Volume2, VolumeX,
   SlidersHorizontal, Sparkles, Thermometer, Upload, Video, Wrench, X, Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -318,7 +318,7 @@ function LiveChart({ data, lines, height = 260 }: { data: Twin[], lines: { key: 
   </LineChart></ResponsiveContainer></div>
 }
 
-function Shell({ path, twin, connected, onMenu, children }: any) {
+function Shell({ path, twin, connected, soundEnabled, onToggleSound, children }: any) {
   const [menuOpen, setMenuOpen] = useState(false)
   const activeTitle = navigation.find(n => n[1] === path)?.[0] || 'AeroTwin'
   return <div className="app-shell">
@@ -329,7 +329,7 @@ function Shell({ path, twin, connected, onMenu, children }: any) {
       <div className="side-bottom"><span><span className={`connection-dot ${connected ? '' : 'off'}`} />{connected ? 'LIVE LINK' : 'RECONNECTING'}</span><small>Generic aero piston engine<br />MALE UAV simulation</small></div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation"><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN <span>/ {activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className="topbar-engine"><Plane size={14} />{twin?.engine_id}</span><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
+      <header className="topbar"><button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation"><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN <span>/ {activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className="topbar-engine"><Plane size={14} />{twin?.engine_id}</span><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} onClick={onToggleSound}>{soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
       <div className="page-content">{children}</div>
     </main>
   </div>
@@ -382,7 +382,29 @@ function Dashboard({ twin, data, command }: any) {
     <div className="metrics-grid dashboard-kpis"><MetricCard label="Overall health" value={health.overall} unit="%" icon={HeartPulse} tone={health.state === 'HEALTHY' ? 'green' : 'orange'} caption={health.state} /><MetricCard label="Fault risk" value={pred.risk} icon={ShieldAlert} tone={pred.risk === 'LOW' ? 'cyan' : 'red'} caption={`${pred.confidence}% model confidence`} /><MetricCard label="Mission reliability" value={mission.reliability_score} unit="%" icon={Route} tone={mission.reliability_score > 78 ? 'green' : 'red'} caption={`${mission.mission_risk} simulated risk`} /><MetricCard label="Estimated RUL" value={twin.estimated_rul_hours} unit=" h" icon={Clock3} tone="blue" caption="Synthetic condition indicator" /></div>
     <div className="dashboard-main"><Panel title="Live engine trends" action={<span className="panel-note"><i className="signal" /> RPM · CYLINDER TEMP · 1 SEC</span>}><LiveChart data={data} height={300} lines={[{ key: 'rpm', name: 'RPM', color: '#147fa3', domain: ['dataMin - 100', 'dataMax + 100'] }, { key: 'cylinder_temperature', name: 'Cylinder °C', color: '#e59a36', axis: 'right', domain: ['dataMin - 5', 'dataMax + 5'] }]} /></Panel><Panel title="Digital twin status" className="twin-summary"><EngineSchematic twin={twin} /><div className="twin-status-line"><span>OPERATING STATE</span><b>{twin.operating_state}</b></div><div className="twin-status-line"><span>ACTIVE SCENARIO</span><b>{twin.settings.fault_label}</b></div><div className="twin-status-line"><span>LAST UPDATE</span><b>{formatTime(twin.updated_at)}</b></div><button className="text-button" onClick={() => navigate('/digital-twin')}>Inspect virtual twin <ArrowRight size={14} /></button></Panel></div>
     <div className="dashboard-bottom"><Panel title="AI fault assessment"><div className="assessment"><div className="prediction-orb" style={{ '--progress': `${pred.confidence}%`, '--color': riskColor(pred.confidence) } as any}><b>{pred.confidence}%</b><small>CONFIDENCE</small></div><div><Badge value={pred.risk} /><h3>{pred.predicted_fault_label}</h3><p>{pred.affected_parameters?.length ? `Signals requiring attention: ${pred.affected_parameters.slice(0, 3).join(', ')}.` : 'All monitored signals match the learned normal operating baseline.'}</p><button className="text-button" onClick={() => navigate('/prediction')}>View explainable AI <ArrowRight size={14} /></button></div></div></Panel><Alerts alerts={twin.alerts} command={command} /></div>
+    <EmergencyResponsePanel twin={twin} />
   </>
+}
+
+function EmergencyResponsePanel({ twin }: { twin: Twin }) {
+  const [previewOpen, setPreviewOpen] = useState(false)
+  return <Panel className="emergency-panel" title="Emergency response" action={<span className="emergency-status"><i /> DEMO · DISPATCH NOT CONNECTED</span>}>
+    <div className="emergency-summary">
+      <span className="emergency-icon"><ShieldAlert size={20} /></span>
+      <div><b>Crash-response workflow preview</b><p>This prototype can prepare an incident summary for operator review, but it does not detect real crashes or contact emergency services.</p></div>
+      <button className="button danger compact" onClick={() => setPreviewOpen(value => !value)}>{previewOpen ? 'Close drill' : 'Preview SOS drill'}</button>
+    </div>
+    {previewOpen && <div className="sos-preview" role="status">
+      <div className="sos-preview-heading"><span><MapPin size={16} /> SIMULATED INCIDENT BRIEF</span><Badge value="NOT SENT" /></div>
+      <dl>
+        <div><dt>Vehicle</dt><dd>{twin.engine_id} · simulation only</dd></div>
+        <div><dt>Last telemetry</dt><dd>{formatTime(twin.updated_at)} · simulated</dd></div>
+        <div><dt>Position</dt><dd>GNSS coordinates unavailable in this demo</dd></div>
+        <div><dt>Nearest response center</dt><dd>Unavailable · no verified directory connected</dd></div>
+      </dl>
+      <p>For a real deployment, connect validated crash-detection and GNSS sources to an approved emergency-routing provider, then require an authorized operator to verify the incident and confirm dispatch. This drill never sends an SOS.</p>
+    </div>}
+  </Panel>
 }
 
 function Alerts({ alerts, command }: any) { return <Panel title="Recent alerts" action={<button className="text-button" onClick={() => navigate('/history')}>Timeline <ArrowRight size={14} /></button>}><div className="alerts-list">{alerts?.length ? alerts.slice(0, 5).map((alert: any) => <article className={`alert-row ${severityClass(alert.severity)}`} key={alert.id}><span className="alert-symbol"><AlertTriangle size={15} /></span><div><div><Badge value={alert.severity} /><time>{formatTime(alert.timestamp)}</time></div><p>{alert.message}</p></div>{!alert.acknowledged && <button aria-label="Acknowledge alert" onClick={() => command(`/api/alerts/${alert.id}/acknowledge`)}><CheckCircle2 size={16} /></button>}</article>) : <Empty text="No active alerts — monitoring live baseline." />}</div></Panel> }
@@ -615,6 +637,47 @@ function Loading({ error }: { error: string }) { return <div className="loading-
 export default function App() {
   const path = usePath()
   const state = useTwin()
+  const [soundEnabled, setSoundEnabled] = useState(false)
+  const audioContext = useRef<AudioContext | null>(null)
+  const previousAlerts = useRef<Set<string> | null>(null)
+  const playTone = useCallback((kind: 'toggle' | 'warning' | 'critical') => {
+    if (!window.AudioContext) return
+    const context = audioContext.current || (audioContext.current = new window.AudioContext())
+    if (context.state === 'suspended') void context.resume()
+    const frequencies = kind === 'critical' ? [740, 520, 740] : kind === 'warning' ? [640, 820] : [660, 880]
+    frequencies.forEach((frequency, index) => {
+      const start = context.currentTime + index * (kind === 'critical' ? .16 : .12)
+      const oscillator = context.createOscillator()
+      const gain = context.createGain()
+      oscillator.type = 'sine'
+      oscillator.frequency.setValueAtTime(frequency, start)
+      gain.gain.setValueAtTime(.0001, start)
+      gain.gain.exponentialRampToValueAtTime(kind === 'critical' ? .045 : .025, start + .012)
+      gain.gain.exponentialRampToValueAtTime(.0001, start + .11)
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.start(start)
+      oscillator.stop(start + .12)
+    })
+  }, [])
+  useEffect(() => {
+    const alerts = state.twin?.alerts || []
+    const signatures = new Set<string>(alerts.map((alert: any) => `${alert.id}:${alert.severity}:${alert.message}`))
+    if (previousAlerts.current && soundEnabled) {
+      const added = alerts.filter((alert: any) => !previousAlerts.current?.has(`${alert.id}:${alert.severity}:${alert.message}`))
+      const critical = added.some((alert: any) => ['HIGH', 'CRITICAL', 'SEVERE'].includes(String(alert.severity).toUpperCase()))
+      const warning = added.some((alert: any) => ['WARNING', 'MODERATE', 'MEDIUM'].includes(String(alert.severity).toUpperCase()))
+      if (critical) playTone('critical')
+      else if (warning) playTone('warning')
+    }
+    previousAlerts.current = signatures
+  }, [state.twin?.alerts, soundEnabled, playTone])
+  useEffect(() => () => { if (audioContext.current?.state !== 'closed') void audioContext.current?.close() }, [])
+  const toggleSound = () => {
+    const next = !soundEnabled
+    setSoundEnabled(next)
+    if (next) playTone('toggle')
+  }
   if (path === '/') return <Landing twin={state.twin} />
   if (!state.twin) return <Loading error={state.error} />
   const props = { twin: state.twin, data: state.history, command: state.command }
@@ -638,5 +701,5 @@ export default function App() {
     case '/about': content = <AboutPage />; break
     default: content = <Dashboard {...props} />
   }
-  return <Shell path={path} twin={state.twin} connected={state.connected}>{content}</Shell>
+  return <Shell path={path} twin={state.twin} connected={state.connected} soundEnabled={soundEnabled} onToggleSound={toggleSound}>{content}</Shell>
 }
