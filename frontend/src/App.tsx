@@ -304,14 +304,17 @@ function CadEngineModel({ twin }: { twin: Twin }) {
   </section>
 }
 
-function LiveChart({ data, lines, height = 260 }: { data: Twin[], lines: { key: string, name: string, color: string }[], height?: number }) {
+function LiveChart({ data, lines, height = 260 }: { data: Twin[], lines: { key: string, name: string, color: string, axis?: 'right', domain?: [number | string, number | string] }[], height?: number }) {
   const cleaned = data.map((entry: any, index) => ({ t: formatTime(entry.telemetry?.timestamp || entry.timestamp) || `${index}`, ...(entry.telemetry || entry) }))
-  return <div className="chart" style={{ height }}><ResponsiveContainer width="100%" height="100%"><LineChart data={cleaned} margin={{ left: -18, right: 8, top: 12, bottom: 0 }}>
+  const leftDomain = lines.find(line => !line.axis)?.domain
+  const rightDomain = lines.find(line => line.axis === 'right')?.domain
+  return <div className="chart" style={{ height }}><ResponsiveContainer width="100%" height="100%"><LineChart data={cleaned} margin={{ left: 0, right: 0, top: 12, bottom: 0 }}>
     <CartesianGrid vertical={false} stroke="#213641" strokeDasharray="3 5" />
     <XAxis dataKey="t" minTickGap={52} tick={{ fill: '#88a6b2', fontSize: 10 }} axisLine={false} tickLine={false} />
-    <YAxis tick={{ fill: '#88a6b2', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
+    <YAxis yAxisId="left" domain={leftDomain || ['auto', 'auto']} tick={{ fill: '#88a6b2', fontSize: 10 }} axisLine={false} tickLine={false} width={42} />
+    {lines.some(line => line.axis === 'right') && <YAxis yAxisId="right" orientation="right" domain={rightDomain || ['auto', 'auto']} tick={{ fill: '#88a6b2', fontSize: 10 }} axisLine={false} tickLine={false} width={46} />}
     <Tooltip contentStyle={{ background: '#0d202b', border: '1px solid #34515c', borderRadius: 8 }} labelStyle={{ color: '#c7d9e0' }} />
-    {lines.map(line => <Line key={line.key} type="monotone" dataKey={line.key} name={line.name} stroke={line.color} strokeWidth={2} dot={false} />)}
+    {lines.map(line => <Line key={line.key} yAxisId={line.axis === 'right' ? 'right' : 'left'} type="monotone" dataKey={line.key} name={line.name} stroke={line.color} strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />)}
   </LineChart></ResponsiveContainer></div>
 }
 
@@ -346,9 +349,38 @@ function Feature({ icon: Icon, title, text }: any) { return <article className="
 
 function Dashboard({ twin, data, command }: any) {
   const tel = twin.telemetry, pred = twin.prediction, health = twin.health, mission = twin.mission
-  return <><div className="page-intro"><div><span className="eyebrow">DEMO MODE · SYNTHETIC ENGINE ID {twin.engine_id}</span><h2>Operational overview</h2><p>Live virtual representation of the generic aero piston engine.</p></div><button className="button ghost compact" onClick={() => command(twin.settings.running ? '/api/simulation/pause' : '/api/simulation/start')} >{twin.settings.running ? <Pause size={15} /> : <Play size={15} />}{twin.settings.running ? 'Pause simulation' : 'Resume simulation'}</button></div>
-    <div className="metrics-grid"><MetricCard label="Overall health" value={health.overall} unit="%" icon={HeartPulse} tone={health.state === 'HEALTHY' ? 'green' : 'orange'} caption={health.state} /><MetricCard label="Fault risk" value={pred.risk} icon={ShieldAlert} tone={pred.risk === 'LOW' ? 'cyan' : 'red'} caption={`${pred.confidence}% model confidence`} /><MetricCard label="Anomaly score" value={pred.anomaly_score} unit=" / 100" icon={Radar} tone={pred.anomaly_score < 35 ? 'cyan' : 'orange'} caption={pred.anomaly_status} /><MetricCard label="Estimated RUL" value={twin.estimated_rul_hours} unit=" h" icon={Clock3} tone="blue" caption="Simulated condition indicator" /><MetricCard label="Mission reliability" value={mission.reliability_score} unit="%" icon={Route} tone={mission.reliability_score > 78 ? 'green' : 'red'} caption={`${mission.mission_risk} mission risk`} /><MetricCard label="Current RPM" value={Math.round(tel.rpm)} unit=" rpm" icon={Gauge} tone="cyan" caption={`${tel.load}% engine load`} /></div>
-    <div className="dashboard-main"><Panel title="Live telemetry" action={<span className="panel-note"><i className="signal" /> 1-second stream</span>}><LiveChart data={data} lines={[{ key: 'rpm', name: 'RPM', color: '#51d6e5' }, { key: 'cylinder_temperature', name: 'Cylinder °C', color: '#efad5d' }]} /></Panel><Panel title="Digital twin status" className="twin-summary"><EngineSchematic twin={twin} /><div className="twin-status-line"><span>OPERATING STATE</span><b>{twin.operating_state}</b></div><div className="twin-status-line"><span>ACTIVE SCENARIO</span><b>{twin.settings.fault_label}</b></div><div className="twin-status-line"><span>LAST UPDATE</span><b>{formatTime(twin.updated_at)}</b></div><button className="text-button" onClick={() => navigate('/digital-twin')}>Inspect virtual twin <ArrowRight size={14} /></button></Panel></div>
+  const nominal = health.state === 'HEALTHY' && pred.risk === 'LOW'
+  const statusLabel = nominal ? 'Baseline stable' : 'Condition review'
+  const statusSummary = pred.affected_parameters?.length
+    ? `Review ${pred.affected_parameters.slice(0, 2).join(' and ').toLowerCase()} signals in the active simulation.`
+    : nominal
+      ? 'Current synthetic signals are tracking within the learned baseline.'
+      : `Twin health is ${health.state.toLowerCase()} with ${pred.risk.toLowerCase()} modeled fault risk. Review the evidence.`
+  return <>
+    <div className="page-intro"><div><span className="eyebrow">LIVE ENGINE TWIN · SYNTHETIC DATA · {twin.engine_id}</span><h2>Flightline overview</h2><p>Mission-oriented view of the selected virtual engine and its current condition.</p></div><button className="button ghost compact" onClick={() => command(twin.settings.running ? '/api/simulation/pause' : '/api/simulation/start')} >{twin.settings.running ? <Pause size={15} /> : <Play size={15} />}{twin.settings.running ? 'Pause simulation' : 'Resume simulation'}</button></div>
+    <section className={`flightline-hero ${nominal ? 'nominal' : 'review'}`} aria-label="Simulation condition summary">
+      <div className="flightline-copy">
+        <div className="flightline-kicker"><span className="pulse" /> SIMULATION CONDITION <span className="flightline-divider">/</span> {twin.operating_state}</div>
+        <h3>{statusLabel}</h3>
+        <p>{statusSummary}</p>
+        <div className="flightline-health">
+          <div><span>ENGINE CONDITION INDEX</span><b>{health.overall}<small> / 100</small></b></div>
+          <div className="flightline-progress"><i style={{ width: `${health.overall}%` }} /></div>
+        </div>
+        <div className="flightline-links">
+          <button className="flightline-link" onClick={() => navigate('/digital-twin')}>Inspect twin <ArrowRight size={14} /></button>
+          <button className="flightline-link" onClick={() => navigate('/mission')}>Mission profile <ArrowRight size={14} /></button>
+        </div>
+      </div>
+      <div className="flightline-instruments" aria-label="Key live readings">
+        <article><span>ENGINE SPEED</span><b>{Math.round(tel.rpm).toLocaleString()}</b><small>RPM</small></article>
+        <article><span>CYLINDER TEMP</span><b>{tel.cylinder_temperature}</b><small>°C</small></article>
+        <article><span>OIL PRESSURE</span><b>{tel.oil_pressure}</b><small>BAR</small></article>
+        <article className={pred.anomaly_score >= 35 ? 'instrument-alert' : ''}><span>ANOMALY SCORE</span><b>{pred.anomaly_score}</b><small>/ 100 · {pred.anomaly_status}</small></article>
+      </div>
+    </section>
+    <div className="metrics-grid dashboard-kpis"><MetricCard label="Overall health" value={health.overall} unit="%" icon={HeartPulse} tone={health.state === 'HEALTHY' ? 'green' : 'orange'} caption={health.state} /><MetricCard label="Fault risk" value={pred.risk} icon={ShieldAlert} tone={pred.risk === 'LOW' ? 'cyan' : 'red'} caption={`${pred.confidence}% model confidence`} /><MetricCard label="Mission reliability" value={mission.reliability_score} unit="%" icon={Route} tone={mission.reliability_score > 78 ? 'green' : 'red'} caption={`${mission.mission_risk} simulated risk`} /><MetricCard label="Estimated RUL" value={twin.estimated_rul_hours} unit=" h" icon={Clock3} tone="blue" caption="Synthetic condition indicator" /></div>
+    <div className="dashboard-main"><Panel title="Live engine trends" action={<span className="panel-note"><i className="signal" /> RPM · CYLINDER TEMP · 1 SEC</span>}><LiveChart data={data} height={300} lines={[{ key: 'rpm', name: 'RPM', color: '#147fa3', domain: ['dataMin - 100', 'dataMax + 100'] }, { key: 'cylinder_temperature', name: 'Cylinder °C', color: '#e59a36', axis: 'right', domain: ['dataMin - 5', 'dataMax + 5'] }]} /></Panel><Panel title="Digital twin status" className="twin-summary"><EngineSchematic twin={twin} /><div className="twin-status-line"><span>OPERATING STATE</span><b>{twin.operating_state}</b></div><div className="twin-status-line"><span>ACTIVE SCENARIO</span><b>{twin.settings.fault_label}</b></div><div className="twin-status-line"><span>LAST UPDATE</span><b>{formatTime(twin.updated_at)}</b></div><button className="text-button" onClick={() => navigate('/digital-twin')}>Inspect virtual twin <ArrowRight size={14} /></button></Panel></div>
     <div className="dashboard-bottom"><Panel title="AI fault assessment"><div className="assessment"><div className="prediction-orb" style={{ '--progress': `${pred.confidence}%`, '--color': riskColor(pred.confidence) } as any}><b>{pred.confidence}%</b><small>CONFIDENCE</small></div><div><Badge value={pred.risk} /><h3>{pred.predicted_fault_label}</h3><p>{pred.affected_parameters?.length ? `Signals requiring attention: ${pred.affected_parameters.slice(0, 3).join(', ')}.` : 'All monitored signals match the learned normal operating baseline.'}</p><button className="text-button" onClick={() => navigate('/prediction')}>View explainable AI <ArrowRight size={14} /></button></div></div></Panel><Alerts alerts={twin.alerts} command={command} /></div>
   </>
 }
