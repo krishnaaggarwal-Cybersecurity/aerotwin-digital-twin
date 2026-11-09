@@ -6,6 +6,7 @@ import {
   Play, Radar, RefreshCcw, Route, Satellite, Send, Settings2, ShieldAlert,
   SlidersHorizontal, Sparkles, Thermometer, Upload, Video, Wrench, X, Zap,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -24,16 +25,13 @@ const API_BASE = (import.meta as any).env?.DEV ? '' : (import.meta as any).env?.
 const api = (path: string) => `${API_BASE}${path}`
 const STATIC_DEMO = Boolean((import.meta as any).env?.VITE_STATIC_DEMO)
 
-const navigation = [
-  ['Dashboard', '/dashboard', CircleGauge], ['Fleet', '/fleet', Layers3],
-  ['Virtual UAV', '/uav', Plane], ['Digital Twin', '/digital-twin', Boxes],
-  ['Telemetry', '/telemetry', Activity], ['Health', '/health', HeartPulse],
-  ['Fault Prediction', '/prediction', Bot], ['Mission Reliability', '/mission', Route],
-  ['Maintenance', '/maintenance', Wrench], ['History', '/history', History],
-  ['Simulation', '/simulation', SlidersHorizontal], ['Data Lab', '/data-lab', FileUp],
-  ['AI Assistant', '/assistant', MessageCircle], ['Project Video', '/video', Video],
-  ['Architecture', '/architecture', Network], ['About', '/about', Sparkles],
-] as const
+type NavigationItem = [string, string, LucideIcon]
+const navigationGroups: { label: string, items: NavigationItem[] }[] = [
+  { label: 'MISSION DESK', items: [['Dashboard', '/dashboard', CircleGauge], ['Fleet', '/fleet', Layers3], ['Virtual UAV', '/uav', Plane], ['Digital Twin', '/digital-twin', Boxes]] },
+  { label: 'ENGINE INTELLIGENCE', items: [['Telemetry', '/telemetry', Activity], ['Health', '/health', HeartPulse], ['Fault Prediction', '/prediction', Bot], ['Mission Reliability', '/mission', Route], ['Maintenance', '/maintenance', Wrench], ['History', '/history', History]] },
+  { label: 'WORKBENCH', items: [['Simulation', '/simulation', SlidersHorizontal], ['Data Lab', '/data-lab', FileUp], ['AI Assistant', '/assistant', MessageCircle], ['Project Video', '/video', Video], ['Architecture', '/architecture', Network], ['About', '/about', Sparkles]] },
+]
+const navigation = navigationGroups.flatMap(group => group.items)
 
 const faultOptions = [
   ['normal', 'Normal operation', 'Healthy synthetic baseline'],
@@ -324,11 +322,11 @@ function Shell({ path, twin, connected, onMenu, children }: any) {
     <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
       <button className="brand" onClick={() => navigate('/')} aria-label="Go to AeroTwin home"><span className="brand-mark"><Satellite size={20} /></span><span>AERO<span>TWIN</span><small>DIGITAL TWIN SYSTEM</small></span></button>
       <div className="demo-flag"><span className="pulse" /> DEMO MODE <small>SYNTHETIC DATA</small></div>
-      <nav aria-label="Primary navigation">{navigation.map(([label, href, Icon]) => <button key={href} className={path === href ? 'active' : ''} onClick={() => { navigate(href); setMenuOpen(false) }}><Icon size={17} />{label}</button>)}</nav>
+      <nav aria-label="Primary navigation">{navigationGroups.map(group => <div className="nav-group" key={group.label}><span className="nav-group-label">{group.label}</span>{group.items.map(([label, href, Icon]) => <button key={href} className={path === href ? 'active' : ''} onClick={() => { navigate(href); setMenuOpen(false) }}><Icon size={17} /><span>{label}</span><ChevronRight className="nav-chevron" size={13} /></button>)}</div>)}</nav>
       <div className="side-bottom"><span><span className={`connection-dot ${connected ? '' : 'off'}`} />{connected ? 'LIVE LINK' : 'RECONNECTING'}</span><small>Generic aero piston engine<br />MALE UAV simulation</small></div>
     </aside>
     <main className="main-content">
-      <header className="topbar"><button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation"><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN / <span>{activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
+      <header className="topbar"><button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation"><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN <span>/ {activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className="topbar-engine"><Plane size={14} />{twin?.engine_id}</span><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
       <div className="page-content">{children}</div>
     </main>
   </div>
