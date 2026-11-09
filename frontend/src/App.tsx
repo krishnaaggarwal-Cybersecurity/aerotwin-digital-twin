@@ -642,6 +642,25 @@ function ArchitecturePage() { const stages = [['Telemetry Simulator', Activity],
 const ncAsset = (path: string) => `${(import.meta as any).env.BASE_URL}research/ncmapss/${path}`
 function NcmapssPage() {
   const [selected, setSelected] = useState(0)
+  const [runtime, setRuntime] = useState<Twin | null>(null)
+  const [prediction, setPrediction] = useState<Twin | null>(null)
+  const [inferenceError, setInferenceError] = useState('')
+  const [inferenceBusy, setInferenceBusy] = useState(false)
+  useEffect(() => {
+    if (STATIC_DEMO) return
+    fetch(api('/api/ncmapss/status')).then(response => response.ok ? response.json() : null).then(setRuntime).catch(() => setRuntime(null))
+  }, [])
+  const runNcmaps = async (file?: File) => {
+    if (!file) return
+    setInferenceBusy(true); setInferenceError(''); setPrediction(null)
+    try {
+      const response = await fetch(api('/api/ncmapss/predict'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename: file.name, csv_text: await file.text() }) })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload.detail || `Inference failed (${response.status})`)
+      setPrediction(payload)
+    } catch (error) { setInferenceError(error instanceof Error ? error.message : 'N-CMAPSS model inference failed.') }
+    finally { setInferenceBusy(false) }
+  }
   const stages = [
     { title: 'N-CMAPSS data', tag: 'NASA DS03-012', text: 'The source workflow targets the N-CMAPSS DS03-012 turbofan degradation dataset. The dataset itself is not bundled; obtain it from NASA and follow its terms before training.', icon: Database },
     { title: 'Explore & prepare', tag: 'EDA notebook', text: 'Inspect units, flights and failure modes, then prepare development/test sequences for the selected engine population.', icon: BarChart3 },
@@ -656,7 +675,12 @@ function NcmapssPage() {
   const Icon = stages[selected].icon
   return <>
     <div className="page-intro"><div><span className="eyebrow">INTEGRATED RESEARCH TRACK · TURBOFAN</span><h2>N-CMAPSS predictive maintenance</h2><p>Explore and download the original project’s notebooks, trained artifacts, MQTT agents and Node-RED flow alongside AeroTwin.</p></div></div>
-    <div className="ncmapss-notice"><AlertTriangle size={18}/><span><b>Research track; model inference is not connected.</b> AeroTwin’s live demo remains its synthetic piston-engine twin. This page preserves and explains the original turbofan workflow and artifacts. The N-CMAPSS dataset is not included, and the legacy TensorFlow models are not loaded in the browser.</span></div>
+    <div className="ncmapss-notice"><AlertTriangle size={18}/><span><b>Separate turbofan research model.</b> Results here do not replace AeroTwin’s synthetic piston-engine twin, and are not certified maintenance decisions. Upload at least 10 chronological rows with the 18 model features shown below. The full NASA dataset is not bundled.</span></div>
+    <Panel title="Run the original BiLSTM models" action={<span className="panel-note">LOCAL BACKEND INFERENCE</span>}>
+      {STATIC_DEMO ? <div className="nc-inference-missing"><p>This hosted browser demo has no Python backend. To enable model inference on Windows, use Python 3.10 and run:</p><code>start-ncmapss.bat</code></div> : runtime?.ready ? <div className="nc-inference-ready"><span className="live-pill"><i/>MODEL READY</span><p>Upload a chronological feature CSV. The original scaler and both included BiLSTM models will process the last 10 rows.</p><label className="button primary compact"><Upload size={15}/>{inferenceBusy ? 'Running models…' : 'Choose N-CMAPSS feature CSV'}<input type="file" accept=".csv,text/csv" onChange={event => { void runNcmaps(event.target.files?.[0]); event.target.value = '' }} disabled={inferenceBusy}/></label><small className="nc-feature-list">Required columns, in model order: {runtime.features.join(', ')}</small></div> : <div className="nc-inference-missing"><span className="live-pill offline"><i/>{runtime ? 'MODEL RUNTIME NOT READY' : 'LOCAL BACKEND REQUIRED'}</span><p>{runtime?.message || 'Start the local FastAPI backend to check N-CMAPSS runtime availability.'}</p><code>pip install -r backend/requirements.txt -r backend/requirements-ncmapss.txt</code><small>Python 3.10 required for the optional TensorFlow 2.15 runtime.</small></div>}
+      {inferenceError && <div className="error-banner" role="alert">{inferenceError}</div>}
+      {prediction && <div className="nc-predictions"><div><span>ENGINE STATE · CLASS {prediction.state.class}</span><b>{Math.round(prediction.state.confidence * 100)}%</b><small>model confidence</small></div><div><span>RUL PROGNOSTIC BAND</span><b>{prediction.rul.band}</b><small>{Math.round(prediction.rul.confidence * 100)}% model confidence</small></div><p>{prediction.scope_note}</p></div>}
+    </Panel>
     <Panel title="End-to-end workflow" action={<span className="panel-note">SELECT A STAGE TO EXPLORE</span>}>
       <div className="ncmapss-stages">{stages.map((stage, i) => { const StageIcon = stage.icon; return <button key={stage.title} className={`nc-stage ${i === selected ? 'selected' : ''}`} onClick={() => setSelected(i)} aria-pressed={i === selected}><StageIcon size={17}/><span><b>0{i + 1} · {stage.title}</b><small>{stage.tag}</small></span></button> })}</div>
       <div className="nc-stage-detail"><div className="nc-stage-icon"><Icon size={23}/></div><div><span className="eyebrow">STAGE 0{selected + 1}</span><h3>{stages[selected].title}</h3><p>{stages[selected].text}</p></div></div>

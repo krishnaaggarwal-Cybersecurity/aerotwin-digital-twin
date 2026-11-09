@@ -1,0 +1,4 @@
+# Optional legacy-model runtime. Python 3.10 is required for this pinned TensorFlow line.
+tensorflow==2.15.1
+numpy==1.26.4
+h5py==3.10.0

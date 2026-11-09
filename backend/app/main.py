@@ -13,6 +13,7 @@ from .config import ENGINE_ID, FLEET_ENGINE_IDS, ROOT, TELEMETRY_INTERVAL
 from .database import Database
 from .digital_twin import DigitalTwin
 from .ml import InferenceService, train_models
+from . import ncmapss
 from .schemas import AssistantRequest, CSVAnalysisRequest, FaultRequest, FleetControl, FleetSelection, SimulationSettings, UAVControl
 from .telemetry_analysis import analyze_csv
 from .virtual_uav import VirtualUAV
@@ -295,6 +296,21 @@ def analyze_telemetry(request: CSVAnalysisRequest) -> dict[str, Any]:
         return analyze_csv(request.csv_text, request.filename)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+
+
+@app.get("/api/ncmapss/status")
+def ncmapss_model_status() -> dict[str, Any]:
+    return ncmapss.status()
+
+
+@app.post("/api/ncmapss/predict")
+def predict_ncmapss(request: CSVAnalysisRequest) -> dict[str, Any]:
+    try:
+        return ncmapss.predict_csv(request.csv_text)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(503, str(exc)) from exc
 
 
 @app.get("/api/assistant/status")
