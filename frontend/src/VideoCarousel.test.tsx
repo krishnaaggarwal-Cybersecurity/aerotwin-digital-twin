@@ -7,7 +7,9 @@ describe('project video carousel', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
   })
 
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
   it('starts with the narrated walkthrough and English captions', () => {
     const { container } = render(<VideoCarousel />)
