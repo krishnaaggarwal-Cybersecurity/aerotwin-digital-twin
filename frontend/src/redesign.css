@@ -885,6 +885,10 @@ input[type=range] { accent-color: #147dba; }
 .flightline-link:hover { color: #0c506f; }
 .flightline-link svg { transition: transform .18s ease; }
 .flightline-link:hover svg { transform: translateX(3px); }
+.flightline-link.demo-action { gap: 7px; padding: 6px 10px; border: 1px solid #b9d0d7; border-radius: 6px; color: #155c76; background: #f2f9fb; }
+.flightline-link.demo-action:hover { border-color: #7eb6c4; color: #0a4963; background: #e5f3f6; }
+.flightline-link.demo-action.drill-active { border-color: #d9bc82; color: #7b5719; background: #fff8e9; }
+.flightline-link.demo-action.drill-active:hover { border-color: #c89f52; background: #fff1d1; }
 .flightline-instruments { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 10px; }
 .flightline-instruments article { position: relative; min-height: 105px; padding: 15px 16px 13px; overflow: hidden; border: 1px solid #d5e2e8; border-radius: 8px; background: #ffffffc9; box-shadow: 0 5px 16px #27425508; }
 .flightline-instruments article::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #37a8a4, #368bbc); content: ''; opacity: .8; }

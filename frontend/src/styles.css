@@ -2,6 +2,9 @@
 
 :root { font-family: Manrope, Inter, system-ui, sans-serif; color: #e9f2f4; background: #07131d; font-synthesis: none; }
 * { box-sizing: border-box; } body { margin: 0; min-width: 320px; background: #07131d; } button, input { font: inherit; } button { color: inherit; cursor: pointer; } button:focus-visible, input:focus-visible { outline: 2px solid #60d6e4; outline-offset: 3px; } h1, h2, h3, p { margin-top: 0; } h1, h2, h3 { letter-spacing: -.035em; } p { color: #9bb1ba; line-height: 1.65; } code { padding: 3px 6px; border-radius: 5px; background: #10232e; color: #8ae5ed; }
+.skip-link { position: fixed; z-index: 100; top: 10px; left: 10px; padding: 10px 14px; transform: translateY(-160%); border: 1px solid #60d6e4; border-radius: 7px; color: #07131d; background: #c7ef70; font-size: 12px; font-weight: 800; box-shadow: 0 8px 24px #0008; }
+.skip-link:focus { transform: translateY(0); }
+.main-content:focus { outline: none; }
 
 .app-shell { min-height: 100vh; display: flex; background: radial-gradient(circle at 80% -10%, #153341 0%, transparent 34%), #08141d; }
 .sidebar { position: fixed; z-index: 10; width: 253px; height: 100vh; padding: 25px 15px 19px; display: flex; flex-direction: column; background: #08141d; border-right: 1px solid #1a3440; }

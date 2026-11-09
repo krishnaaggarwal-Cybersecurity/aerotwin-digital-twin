@@ -321,15 +321,24 @@ function LiveChart({ data, lines, height = 260 }: { data: Twin[], lines: { key: 
 function Shell({ path, twin, connected, soundEnabled, onToggleSound, children }: any) {
   const [menuOpen, setMenuOpen] = useState(false)
   const activeTitle = navigation.find(n => n[1] === path)?.[0] || 'AeroTwin'
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [menuOpen])
   return <div className="app-shell">
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
       <button className="brand" onClick={() => navigate('/')} aria-label="Go to AeroTwin home"><span className="brand-mark"><Satellite size={20} /></span><span>AERO<span>TWIN</span><small>DIGITAL TWIN SYSTEM</small></span></button>
       <div className="demo-flag"><span className="pulse" /> DEMO MODE <small>SYNTHETIC DATA</small></div>
-      <nav aria-label="Primary navigation">{navigationGroups.map(group => <div className="nav-group" key={group.label}><span className="nav-group-label">{group.label}</span>{group.items.map(([label, href, Icon]) => <button key={href} className={path === href ? 'active' : ''} onClick={() => { navigate(href); setMenuOpen(false) }}><Icon size={17} /><span>{label}</span><ChevronRight className="nav-chevron" size={13} /></button>)}</div>)}</nav>
+      <nav id="primary-navigation" aria-label="Primary navigation">{navigationGroups.map(group => <div className="nav-group" key={group.label}><span className="nav-group-label">{group.label}</span>{group.items.map(([label, href, Icon]) => <button key={href} className={path === href ? 'active' : ''} aria-current={path === href ? 'page' : undefined} onClick={() => { navigate(href); setMenuOpen(false) }}><Icon size={17} /><span>{label}</span><ChevronRight className="nav-chevron" size={13} /></button>)}</div>)}</nav>
       <div className="side-bottom"><span><span className={`connection-dot ${connected ? '' : 'off'}`} />{connected ? 'LIVE LINK' : 'RECONNECTING'}</span><small>Generic aero piston engine<br />MALE UAV simulation</small></div>
     </aside>
-    <main className="main-content">
-      <header className="topbar"><button className="mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation"><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN <span>/ {activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className="topbar-engine"><Plane size={14} />{twin?.engine_id}</span><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} onClick={onToggleSound}>{soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
+    <main id="main-content" className="main-content" tabIndex={-1}>
+      <header className="topbar"><button className="mobile-menu" aria-controls="primary-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}><Menu size={20} /></button><div><div className="breadcrumb">AEROTWIN <span>/ {activeTitle.toUpperCase()}</span></div><h1>{activeTitle}</h1></div><div className="top-status"><span className="topbar-engine"><Plane size={14} />{twin?.engine_id}</span><span className={`live-pill ${connected ? '' : 'offline'}`}><i />{connected ? 'LIVE' : 'DISCONNECTED'}</span><span className="time-stamp">{formatTime(twin?.updated_at)}</span><button aria-label={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} aria-pressed={soundEnabled} title={soundEnabled ? 'Mute sound alerts' : 'Enable sound alerts'} onClick={onToggleSound}>{soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button aria-label="Settings" onClick={() => navigate('/simulation')}><Settings2 size={18} /></button></div></header>
       <div className="page-content">{children}</div>
     </main>
   </div>
@@ -349,6 +358,7 @@ function Feature({ icon: Icon, title, text }: any) { return <article className="
 
 function Dashboard({ twin, data, command }: any) {
   const tel = twin.telemetry, pred = twin.prediction, health = twin.health, mission = twin.mission
+  const coolingDrillActive = twin.settings.active_fault === 'cooling_degradation'
   const nominal = health.state === 'HEALTHY' && pred.risk === 'LOW'
   const statusLabel = nominal ? 'Baseline stable' : 'Condition review'
   const statusSummary = pred.affected_parameters?.length
@@ -370,6 +380,7 @@ function Dashboard({ twin, data, command }: any) {
         <div className="flightline-links">
           <button className="flightline-link" onClick={() => navigate('/digital-twin')}>Inspect twin <ArrowRight size={14} /></button>
           <button className="flightline-link" onClick={() => navigate('/mission')}>Mission profile <ArrowRight size={14} /></button>
+          <button className={`flightline-link demo-action ${coolingDrillActive ? 'drill-active' : ''}`} title="Changes the synthetic demo only; no physical system is connected." onClick={() => command('/api/simulation/fault', { fault: coolingDrillActive ? 'normal' : 'cooling_degradation' })}>{coolingDrillActive ? 'Reset to normal' : 'Try cooling drill'} <Zap size={14} /></button>
         </div>
       </div>
       <div className="flightline-instruments" aria-label="Key live readings">
