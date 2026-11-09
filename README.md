@@ -165,7 +165,7 @@ The **Data Lab** accepts CSV files up to 2 MB / 5,000 rows, requires at least ei
 
 The Project Video page opens on a narrated, captioned walkthrough covering the synthetic telemetry, digital twin, ML evidence, virtual fleet and aircraft, assistant, CSV analysis, and safety boundaries. The two shorter supplied clips are illustrative emergency-response and flight-HUD concepts; they are not connected prototype footage or evidence of real crash detection or SOS dispatch. The English narration captions can be toggled in the player.
 
-To regenerate the walkthrough on Windows, install Python packages `opencv-python`, `Pillow`, `numpy`, and `imageio-ffmpeg`, then run `powershell -ExecutionPolicy Bypass -File scripts/generate_aerotwin_narration.ps1` followed by `python scripts/render_aerotwin_walkthrough.py`. These commands write the voice segments, MP4, English WebVTT captions, and poster under `frontend/public/demo/`.
+The walkthrough uses screenshots captured from the current browser prototype, not illustrative replacement screens. To refresh it on Windows, start the static demo with `$env:VITE_STATIC_DEMO='true'; npm run dev -- --host 127.0.0.1 --port 5193`, then run `node scripts/capture_aerotwin_screens.mjs`, `powershell -ExecutionPolicy Bypass -File scripts/generate_aerotwin_narration.ps1`, and `python scripts/render_aerotwin_walkthrough.py`. The local capture requires Microsoft Edge; narration uses Microsoft David with paced SSML emphasis. Python packages `opencv-python`, `Pillow`, `numpy`, and `imageio-ffmpeg` are required. Temporary captures and narration stay under `scripts/walkthrough-work/`; the renderer writes only the MP4, English WebVTT captions, and poster under `frontend/public/demo/`.
 
 ## Tests and verification
 

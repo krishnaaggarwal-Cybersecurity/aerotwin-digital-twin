@@ -11,87 +11,91 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = ROOT / "frontend" / "public" / "demo"
-WORK = DEMO / "walkthrough-work"
+WORK = ROOT / "scripts" / "walkthrough-work"
 WIDTH, HEIGHT, FPS = 1280, 720, 24
-MINT = "#65D8BF"
-
+MINT = (56, 205, 166)
 SCENES = [
     {
-        "title": "AEROTWIN",
-        "kicker": "THE PROTOTYPE IN 90 SECONDS",
-        "subtitle": "A digital-twin workflow for synthetic engine-health monitoring",
-        "tag": "START HERE",
-        "metrics": [("LIVE TWIN", "SIMULATED"), ("ENGINE", "PISTON"), ("MODE", "DEMONSTRATOR")],
-        "kind": "intro",
-        "narration": "Welcome to AeroTwin: an interactive digital-twin prototype for monitoring a synthetic aero piston engine. This short walkthrough explains the two concept clips, then shows what the working prototype actually does.",
+        "image": "live-dashboard.jpg",
+        "title": "Welcome to the live prototype",
+        "subtitle": "The current browser app, captured on screen",
+        "focus": (887, 380),
+        "narration": "Welcome to AeroTwin! This is the running prototype itself, captured screen by screen. I’ll show you what’s actually working—from changing engine readings, to the model evidence, to the operator tools. Let’s jump in.",
     },
     {
-        "title": "TWO CONCEPT CLIPS",
-        "kicker": "WHAT THE SUPPLIED VIDEOS SHOW",
-        "subtitle": "Illustrative visuals - not recordings of this application",
-        "tag": "IMPORTANT CONTEXT",
-        "metrics": [("CLIP 01", "EMERGENCY SCENARIO"), ("CLIP 02", "FLIGHT MONITORING"), ("ACTUAL SYSTEM", "NOT SHOWN")],
-        "kind": "clips",
-        "narration": "The first supplied clip depicts an aircraft emergency scenario. The second shows a flight-monitoring and safe-landing concept. Both are illustrative visuals only. They are not recordings of AeroTwin, real UAV footage from this application, or evidence that crash detection or emergency dispatch is connected.",
+        "image": "live-dashboard.jpg",
+        "title": "Flightline overview",
+        "subtitle": "Selected engine, live synthetic telemetry, and twin health",
+        "focus": (920, 363),
+        "narration": "Start with Flightline Overview. The selected virtual engine is right here. RPM, cylinder temperature, oil pressure, and anomaly score are updating together. This is a working software simulation—not a mockup—but every reading is synthetic. No real engine or aircraft is connected.",
     },
     {
-        "title": "TELEMETRY -> TWIN",
-        "kicker": "01 / A LIVE SOFTWARE MODEL",
-        "subtitle": "One changing synthetic snapshot drives the connected views",
-        "tag": "SIMULATED SIGNALS",
-        "metrics": [("RPM", "ENGINE SPEED"), ("DEG C", "THERMAL"), ("BAR", "PRESSURE"), ("MM/S", "VIBRATION")],
-        "kind": "telemetry",
-        "narration": "In the prototype, a simulator generates changing engine telemetry: RPM, temperatures, oil and fuel pressures, fuel flow, vibration, and operating conditions. The digital twin updates from that stream, and the dashboard visualizes the same selected engine state as it changes.",
+        "image": "live-telemetry.jpg",
+        "title": "Follow each sensor",
+        "subtitle": "Telemetry cards and time-series trends",
+        "focus": (752, 495),
+        "narration": "Open Telemetry. Here are the live sensor cards, and below them, the trends the twin sees. Temperature, pressure, vibration, and fuel signals are tracked together so you can follow what changes, and when.",
     },
     {
-        "title": "EARLY-WARNING EVIDENCE",
-        "kicker": "02 / DETECT - CLASSIFY - EXPLAIN",
-        "subtitle": "Model outputs are visible beside the signals that informed them",
-        "tag": "SYNTHETIC-TRAINED ML",
-        "metrics": [("ANOMALY", "ISOLATION FOREST"), ("FAULT CLASS", "RANDOM FOREST"), ("EVIDENCE", "SIGNAL EXPLANATIONS")],
-        "kind": "models",
-        "narration": "For early warning, an Isolation Forest looks for unusual sensor patterns, while a Random Forest classifies simulated fault types. The interface shows the predicted class, confidence, and contributing signals. Both models were trained on generated synthetic data, not validated real-engine recordings.",
+        "image": "live-prediction.jpg",
+        "title": "See what the models see",
+        "subtitle": "Separate fault classification from anomaly detection",
+        "focus": (977, 428),
+        "narration": "Now Fault Prediction. Random Forest classifies the simulated fault; Isolation Forest checks for unusual patterns. These are separate signals: the current screen shows a Normal class at 91.2 percent confidence and a zero anomaly score. Try a simulated fault and watch the evidence change. The models were trained on synthetic data, not real engine test records.",
     },
     {
-        "title": "HEALTH & MISSION CONTEXT",
-        "kicker": "03 / TURN SIGNALS INTO A STORY",
-        "subtitle": "Understand how a simulated fault affects the engine and mission",
-        "tag": "NOT CERTIFIED OUTPUT",
-        "metrics": [("COMPONENT HEALTH", "ESTIMATED"), ("REMAINING LIFE", "SIMULATED"), ("MISSION SCORE", "SIMULATED")],
-        "kind": "mission",
-        "narration": "Component health and the remaining-life indicator are simulated estimates. Mission reliability combines twin health and simulated mission phases to make the impact of a fault easier to understand. These numbers are demonstrations, not certified airworthiness or service-life decisions.",
+        "image": "live-digital-twin.jpg",
+        "title": "Inspect the digital twin",
+        "subtitle": "Interactive reference geometry, linked to the selected twin",
+        "focus": (610, 480),
+        "narration": "This is the actual Digital Twin inspection view: a three-dimensional reference engine alongside the selected twin’s condition. You can rotate the model and inspect its mapped components. It is a visual reference, not a sensor-equipped, physically synchronized engine.",
     },
     {
-        "title": "A FLEET OF VIRTUAL AIRCRAFT",
-        "kicker": "04 / SELECT - CONTROL - OBSERVE",
-        "subtitle": "The virtual UAV view follows the selected engine twin",
-        "tag": "NO HARDWARE LINK",
-        "metrics": [("FLEET", "3 VIRTUAL TWINS"), ("ROUTE", "VISUAL SIMULATION"), ("FAULTS", "DEMO INJECTION")],
-        "kind": "fleet",
-        "narration": "The fleet view lets you select among independent virtual engines. The virtual UAV page visualizes a route linked to the selected engine. You can pause, resume, and inject demonstration faults. These controls affect software simulation only; they do not pilot a real aircraft.",
+        "image": "live-mission.jpg",
+        "title": "Put health in mission context",
+        "subtitle": "Transparent phase-by-phase simulated reliability",
+        "focus": (750, 424),
+        "narration": "Mission Reliability turns the current simulated condition into a phase-by-phase mission picture. Explore how the score and modeled risk respond to engine health. This is a transparent prototype indicator—not a certified probability of mission success.",
     },
     {
-        "title": "ASK QUESTIONS. CHECK YOUR DATA.",
-        "kicker": "05 / OPERATOR WORKBENCH",
-        "subtitle": "Assistant answers use current twin evidence; CSV checks are prototype rules",
-        "tag": "TWIN-AWARE TOOLS",
-        "metrics": [("ASSISTANT", "SNAPSHOT ATTACHED"), ("DATA LAB", "CSV TREND CHECK"), ("AI API", "OPTIONAL BACKEND")],
-        "kind": "workbench",
-        "narration": "The assistant receives the latest twin snapshot with each question. On the public static site, it uses browser-side evidence routing; a backend can optionally call a configured language model. The Data Lab checks uploaded CSV signals for configured limit breaches and persistent trends. Prototype thresholds are not validated operating limits.",
+        "image": "live-fleet.jpg",
+        "title": "Switch between virtual aircraft",
+        "subtitle": "Three isolated engine-twin simulations",
+        "focus": (780, 475),
+        "narration": "Fleet runs three isolated virtual engine twins. Select another one to change which engine feeds the main dashboard. Each is a separate software simulation, not a real aircraft connection.",
     },
     {
-        "title": "A CLEAR SAFETY BOUNDARY",
-        "kicker": "06 / WHAT THIS PROTOTYPE DOES NOT DO",
-        "subtitle": "No real crash detection, responder lookup, SOS dispatch, or flight control",
-        "tag": "SOFTWARE DEMO ONLY",
-        "metrics": [("SOS DRILL", "PREVIEW ONLY"), ("ENGINE", "SYNTHETIC"), ("UAV", "VIRTUAL")],
-        "kind": "safety",
-        "narration": "The dashboard SOS drill only previews a simulated incident brief. It does not detect a real crash, locate responders, or send an alert. In summary, AeroTwin demonstrates a connected monitoring workflow: telemetry, twin, anomaly evidence, fault classification, health, mission context, and operator-facing explanations, all inside a safe synthetic prototype.",
+        "image": "live-uav.jpg",
+        "title": "Link a virtual UAV to its engine",
+        "subtitle": "Illustrative route only — no hardware connection",
+        "focus": (595, 475),
+        "narration": "On Virtual UAV, watch the illustrative route and linked engine readings side by side. Route progress follows the software simulation, and the page explicitly says it is not a navigation map. Nothing here sends commands to a real aircraft.",
+    },
+    {
+        "image": "live-assistant-answer.jpg",
+        "title": "Ask about the selected twin",
+        "subtitle": "The public demo answers from the latest synthetic snapshot",
+        "focus": (570, 300),
+        "narration": "Now ask the assistant a question about the selected engine. The public demo answers from the latest synthetic twin snapshot, so the response changes with the evidence. This browser version does not connect to a hosted language model; an optional model is only configured on the backend.",
+    },
+    {
+        "image": "live-data-lab.jpg",
+        "title": "Analyze your own telemetry CSV",
+        "subtitle": "Baseline, configured limits, and persistent-change checks",
+        "focus": (912, 402),
+        "narration": "The Data Lab is where you can bring a CSV. It establishes a measured baseline, checks configured signal limits, and looks for persistent changes across consecutive samples. These are prototype screening rules—not validated engine limits.",
+    },
+    {
+        "image": "live-sos-drill.jpg",
+        "title": "Safety boundary: preview only",
+        "subtitle": "No real crash detection, responder lookup, or SOS dispatch",
+        "focus": (690, 415),
+        "narration": "Finally, the SOS drill. It previews an incident brief for demonstration only. It does not detect a real crash, find a help center, or send an SOS. That is AeroTwin today: a connected, interactive software prototype for exploring the monitoring workflow—clearly synthetic, and not connected to a real aircraft.",
     },
 ]
 
 
-def load_font(filename, size):
+def load_font(filename: str, size: int):
     path = Path("C:/Windows/Fonts") / filename
     return ImageFont.truetype(str(path), size) if path.exists() else ImageFont.load_default()
 
@@ -111,24 +115,27 @@ def wrap_text(draw, text, selected_font, max_width):
     return lines
 
 
-def scene_duration(path):
+def audio_duration(path: Path) -> float:
     with wave.open(str(path), "rb") as audio:
         return audio.getnframes() / audio.getframerate()
 
 
-def subtitle_cues(text, seconds):
-    sentences = [f"{part.strip()}." for part in text.replace("!", ".").replace("?", ".").split(".") if part.strip()]
+def captions_for(text: str, duration: float):
+    sentences = [
+        f"{part.strip()}."
+        for part in text.replace("!", ".").replace("?", ".").split(".")
+        if part.strip()
+    ]
     weights = [max(1, len(sentence.split())) for sentence in sentences]
-    total_words = sum(weights)
-    elapsed, result = 0.0, []
+    elapsed, total_words, cues = 0.0, sum(weights), []
     for sentence, weight in zip(sentences, weights):
         start = elapsed
-        elapsed += seconds * weight / total_words
-        result.append((start, elapsed, sentence))
-    return result
+        elapsed += duration * weight / total_words
+        cues.append((start, elapsed, sentence))
+    return cues
 
 
-def timestamp(seconds):
+def timestamp(seconds: float) -> str:
     milliseconds = round(seconds * 1000)
     hours, milliseconds = divmod(milliseconds, 3_600_000)
     minutes, milliseconds = divmod(milliseconds, 60_000)
@@ -136,183 +143,116 @@ def timestamp(seconds):
     return f"{hours:02}:{minutes:02}:{whole_seconds:02}.{milliseconds:03}"
 
 
-def render_scene(scene, progress, caption, index, fonts):
-    kicker_font, title_font, body_font, small_font, card_font, metric_font = fonts
-    image = Image.new("RGB", (WIDTH, HEIGHT), (5, 15, 23))
-    draw = ImageDraw.Draw(image, "RGBA")
-    for x in range(0, WIDTH, 48):
-        draw.line((x, 0, x, HEIGHT), fill=(43, 73, 80, 40))
-    for y in range(0, HEIGHT, 48):
-        draw.line((0, y, WIDTH, y), fill=(43, 73, 80, 32))
-    draw.rectangle((22, 20, WIDTH - 22, HEIGHT - 20), outline=(72, 128, 134, 115))
-    draw.rounded_rectangle((52, 40, 260, 74), radius=7, fill=(16, 53, 60, 220), outline=(85, 196, 177, 150))
-    draw.text((68, 48), "AEROTWIN / TWIN LAB", font=small_font, fill=MINT)
-    draw.text((WIDTH - 255, 50), "SYNTHETIC DEMONSTRATOR", font=small_font, fill=(151, 183, 187))
-    draw.text((58, 104), scene["kicker"], font=kicker_font, fill=MINT)
-    draw.text((56, 137), scene["title"], font=title_font, fill=(239, 248, 247))
-    draw.text((59, 207), scene["subtitle"], font=body_font, fill=(166, 194, 197))
-    draw.rounded_rectangle((56, 270, 627, 558), radius=16, fill=(10, 28, 37, 240), outline=(52, 91, 99, 220))
-    draw.rounded_rectangle((653, 270, 1224, 558), radius=16, fill=(10, 28, 37, 240), outline=(52, 91, 99, 220))
-    draw.text((82, 291), scene["tag"], font=kicker_font, fill=MINT)
-    draw.line((82, 323, 601, 323), fill=(50, 91, 96, 180))
+def camera_frame(source: np.ndarray, progress: float, focus: tuple[int, int]) -> np.ndarray:
+    zoom = 1.0 + 0.035 * progress
+    crop_width, crop_height = int(WIDTH / zoom), int(HEIGHT / zoom)
+    pan_x = int((focus[0] - WIDTH / 2) * progress * 0.04)
+    pan_y = int((focus[1] - HEIGHT / 2) * progress * 0.04)
+    center_x = max(crop_width // 2, min(WIDTH - crop_width // 2, WIDTH // 2 + pan_x))
+    center_y = max(crop_height // 2, min(HEIGHT - crop_height // 2, HEIGHT // 2 + pan_y))
+    x0, y0 = center_x - crop_width // 2, center_y - crop_height // 2
+    image = cv2.resize(source[y0:y0 + crop_height, x0:x0 + crop_width], (WIDTH, HEIGHT))
+    return image
 
-    kind = scene["kind"]
-    if kind == "intro":
-        cx, cy = 340, 433
-        for radius in (104, 77, 49):
-            draw.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), outline=(101, 216, 191, 95), width=2)
-        angle = progress * math.tau
-        dot_x, dot_y = cx + math.cos(angle) * 104, cy + math.sin(angle) * 104
-        draw.ellipse((dot_x - 7, dot_y - 7, dot_x + 7, dot_y + 7), fill=MINT)
-        draw.rounded_rectangle((cx - 46, cy - 31, cx + 46, cy + 31), radius=12, fill=(25, 80, 84), outline=MINT, width=2)
-        draw.text((cx - 28, cy - 13), "TWIN", font=card_font, fill=(235, 251, 249))
-        draw.text((90, 515), "ENGINE TELEMETRY  >  DIGITAL TWIN  >  OPERATOR VIEW", font=small_font, fill=(164, 198, 199))
-    elif kind == "clips":
-        for x, label, copy in ((83, "CLIP 01", "Emergency concept"), (354, "CLIP 02", "Flight HUD concept")):
-            draw.rounded_rectangle((x, 350, x + 245, 503), radius=12, fill=(15, 42, 49), outline=(67, 111, 118))
-            draw.text((x + 18, 367), label, font=kicker_font, fill=MINT)
-            if label.endswith("01"):
-                draw.polygon(((x + 45, 445), (x + 105, 405), (x + 202, 441), (x + 124, 451), (x + 98, 476)), fill=(62, 112, 117, 220))
-                draw.line((x + 62, 450, x + 182, 450), fill=(227, 156, 111, 220), width=3)
-            else:
-                draw.line((x + 20, 438, x + 220, 438), fill=(64, 207, 181, 160), width=2)
-                draw.arc((x + 72, 388, x + 170, 480), 180, 340, fill=MINT, width=3)
-                draw.rounded_rectangle((x + 74, 418, x + 168, 450), radius=5, outline=MINT, width=2)
-            draw.text((x + 18, 477), copy, font=small_font, fill=(208, 224, 222))
-        draw.text((82, 520), "CONCEPT IMAGERY / NOT A CONNECTED DEMONSTRATION", font=small_font, fill=(242, 187, 132))
-    elif kind == "telemetry":
-        values = (0.78 + 0.07 * math.sin(progress * 8), 0.46 + 0.18 * progress, 0.84 - 0.18 * progress, 0.30 + 0.28 * progress)
-        for row, (label, value) in enumerate(zip(("RPM", "CYL TEMP", "OIL PRESS", "VIBRATION"), values)):
-            y = 350 + row * 45
-            draw.text((85, y), label, font=small_font, fill=(188, 217, 216))
-            draw.rounded_rectangle((220, y + 2, 565, y + 22), radius=8, fill=(27, 57, 63))
-            draw.rounded_rectangle((220, y + 2, 220 + 345 * max(0.06, min(0.98, value)), y + 22), radius=8, fill=MINT if row < 2 else "#E4B86C")
-            draw.text((575, y), f"{int(value * 100)}%", font=small_font, fill=(226, 241, 239))
-        draw.text((84, 532), "CHANGING SIGNALS / ONE SELECTED ENGINE", font=small_font, fill=(164, 198, 199))
-    elif kind == "models":
-        steps = (("01  DETECT", "Unusual sensor pattern"), ("02  CLASSIFY", "Likely simulated fault"), ("03  EXPLAIN", "Values and contribution"))
-        for row, (heading, detail) in enumerate(steps):
-            y = 350 + row * 59
-            done = progress >= row * 0.19
-            draw.ellipse((88, y, 119, y + 31), fill=MINT if done else (37, 67, 71))
-            draw.text((96, y + 5), str(row + 1), font=small_font, fill=(4, 26, 30) if done else (182, 211, 211))
-            draw.text((140, y - 2), heading, font=card_font, fill=(227, 245, 242))
-            draw.text((140, y + 27), detail, font=small_font, fill=(155, 189, 190))
-    elif kind == "mission":
-        for i, (label, value) in enumerate((("ENGINE HEALTH", .78), ("MISSION SCORE", .68), ("RUL INDICATOR", .54))):
-            x = 91 + i * 169
-            draw.ellipse((x, 363, x + 130, 493), outline=(47, 79, 85), width=12)
-            draw.arc((x, 363, x + 130, 493), -90, -90 + 360 * value, fill=MINT, width=12)
-            draw.text((x + 30, 410), f"{int(value * 100)}%", font=card_font, fill=(231, 248, 245))
-            for line_index, line in enumerate(wrap_text(draw, label, small_font, 140)):
-                draw.text((x + 5, 509 + line_index * 19), line, font=small_font, fill=(167, 197, 197))
-    elif kind == "fleet":
-        selected = min(2, int(progress * 3))
-        for row in range(3):
-            y = 355 + row * 55
-            active = row == selected
-            draw.rounded_rectangle((86, y, 590, y + 43), radius=8, fill=(18, 61, 65) if active else (15, 37, 44), outline=MINT if active else (48, 76, 82))
-            draw.text((104, y + 10), f"APT-MALE-SIM-0{row + 1}", font=small_font, fill=(228, 245, 243))
-            draw.text((425, y + 10), ("HEALTHY", "WATCH", "HEALTHY")[row], font=small_font, fill=MINT if row != 1 else "#E4B86C")
-    elif kind == "workbench":
-        draw.rounded_rectangle((85, 355, 596, 447), radius=10, fill=(14, 41, 49), outline=(52, 99, 106))
-        draw.text((105, 369), "ASK THE SELECTED TWIN", font=kicker_font, fill=MINT)
-        draw.text((105, 400), '"What signal is most concerning?"', font=body_font, fill=(228, 244, 241))
-        for i, (label, value) in enumerate((("CSV SIGNALS", .62), ("PERSISTENT TREND", .78), ("EVIDENCE CHECK", .54))):
-            x = 91 + i * 167
-            draw.text((x, 474), label, font=load_font("seguisb.ttf", 13), fill=(178, 207, 205))
-            draw.rectangle((x, 502, x + 138, 510), fill=(35, 65, 70))
-            draw.rectangle((x, 502, x + 138 * value, 510), fill=MINT)
-    elif kind == "safety":
-        draw.rounded_rectangle((86, 355, 594, 482), radius=12, fill=(44, 36, 28), outline=(200, 145, 86), width=2)
-        draw.text((110, 376), "SOS DRILL", font=kicker_font, fill=(244, 192, 132))
-        draw.text((110, 414), "PREVIEW ONLY", font=load_font("seguisb.ttf", 31), fill=(255, 235, 207))
-        draw.text((110, 463), "No alert is sent. No responder is contacted.", font=small_font, fill=(225, 204, 179))
-        draw.text((90, 518), "SYNTHETIC DATA / NO FLIGHT CONTROL / NO REAL UAV", font=load_font("seguisb.ttf", 14), fill=(185, 205, 202))
 
-    draw.text((680, 291), "PROTOTYPE FLOW", font=kicker_font, fill=MINT)
-    flow = ("SIMULATE TELEMETRY", "UPDATE ENGINE TWIN", "SURFACE MODEL EVIDENCE", "SHOW OPERATOR CONTEXT")
-    for row, label in enumerate(flow):
-        y = 346 + row * 47
-        done = progress >= row / len(flow)
-        draw.ellipse((685, y, 702, y + 17), fill=MINT if done else (40, 69, 75))
-        draw.text((721, y - 4), label, font=card_font if row == int(progress * 4) else small_font, fill=(232, 246, 243) if done else (137, 169, 172))
-        if row < 3:
-            draw.line((693, y + 19, 693, y + 38), fill=(68, 115, 117, 180), width=2)
-    draw.line((680, 538, 1197, 538), fill=(50, 91, 96, 180))
-    for metric_index, (label, value) in enumerate(scene["metrics"]):
-        x = 680 + (metric_index % 2) * 265
-        if metric_index < 2:
-            draw.text((x, 554), label, font=metric_font, fill=(231, 246, 243))
-            draw.text((x, 581), value, font=small_font, fill=MINT)
-        else:
-            draw.text((1197, 554), label, font=metric_font, fill=(231, 246, 243), anchor="ra")
-            tint = "#F2BB84" if label in ("ACTUAL SYSTEM", "ENGINE", "UAV") else MINT
-            draw.text((1197, 581), value, font=small_font, fill=tint, anchor="ra")
+def render_frame(background, scene, progress, caption, index, fonts):
+    title_font, subtitle_font, caption_font, meta_font = fonts
+    frame = camera_frame(background, progress, scene["focus"])
+    image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)).convert("RGBA")
+    overlay = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay, "RGBA")
 
-    draw.rectangle((56, 621, 1224, 627), fill=(34, 65, 70))
-    draw.rectangle((56, 621, 56 + 1168 * progress, 627), fill=MINT)
-    draw.text((58, 638), "AEROTWIN / PROTOTYPE WALKTHROUGH", font=small_font, fill=(160, 190, 190))
-    draw.text((1221, 638), f"{int(progress * 100):02d}%  /  CHAPTER {index + 1:02d}", font=small_font, fill=(160, 190, 190), anchor="ra")
-    draw.rounded_rectangle((178, 665, 1102, 708), radius=8, fill=(4, 12, 17, 232), outline=(74, 125, 126, 180))
-    caption_lines = wrap_text(draw, caption, small_font, 875)[:2]
-    y = 665 + (43 - len(caption_lines) * 21) // 2
-    for line in caption_lines:
-        draw.text((640, y), line, font=small_font, fill=(244, 250, 247), anchor="ma")
-        y += 21
-    return np.asarray(image)
+    draw.rounded_rectangle((866, 18, 1253, 57), radius=9, fill=(5, 23, 31, 220), outline=(56, 205, 166, 220), width=1)
+    draw.ellipse((883, 32, 894, 43), fill=(*MINT, 255))
+    draw.text((904, 27), "CURRENT PROTOTYPE SCREEN", font=meta_font, fill=(235, 248, 247, 255))
+
+    focus_x, focus_y = scene["focus"]
+    pulse = 1 + .18 * math.sin(progress * math.tau * 2)
+    radius = int(20 * pulse)
+    draw.ellipse((focus_x - radius, focus_y - radius, focus_x + radius, focus_y + radius), outline=(*MINT, 210), width=3)
+    draw.ellipse((focus_x - 4, focus_y - 4, focus_x + 4, focus_y + 4), fill=(*MINT, 245))
+
+    draw.rectangle((0, 525, WIDTH, HEIGHT), fill=(4, 17, 25, 222))
+    draw.rectangle((0, 525, 10, HEIGHT), fill=(*MINT, 255))
+    draw.text((48, 544), f"CHAPTER {index + 1:02}  /  AEROTWIN LIVE PROTOTYPE", font=meta_font, fill=(*MINT, 255))
+    draw.text((48, 568), scene["title"], font=title_font, fill=(247, 251, 250, 255))
+    draw.text((50, 612), scene["subtitle"], font=subtitle_font, fill=(181, 207, 208, 255))
+
+    draw.rounded_rectangle((48, 651, 1232, 706), radius=9, fill=(2, 10, 15, 235), outline=(69, 111, 116, 210), width=1)
+    lines = wrap_text(draw, caption, caption_font, 1120)[:2]
+    first_y = 651 + max(6, (55 - len(lines) * 22) // 2)
+    for line in lines:
+        box = draw.textbbox((0, 0), line, font=caption_font)
+        draw.text(((WIDTH - (box[2] - box[0])) // 2, first_y), line, font=caption_font, fill=(250, 252, 251, 255))
+        first_y += 22
+
+    draw.rectangle((0, 716, WIDTH, 720), fill=(29, 59, 66, 255))
+    draw.rectangle((0, 716, int(WIDTH * progress), 720), fill=(*MINT, 255))
+    image.alpha_composite(overlay)
+    return cv2.cvtColor(np.asarray(image.convert("RGB")), cv2.COLOR_RGB2BGR)
 
 
 def main():
     if not WORK.exists():
-        raise FileNotFoundError(f"Voiceover folder is missing: {WORK}")
+        raise FileNotFoundError(f"Capture and narration folder is missing: {WORK}")
+
     fonts = (
-        load_font("seguisb.ttf", 17),
-        load_font("seguisb.ttf", 46),
-        load_font("segoeui.ttf", 24),
-        load_font("segoeui.ttf", 16),
-        load_font("seguisb.ttf", 20),
-        load_font("seguisb.ttf", 19),
+        load_font("seguisb.ttf", 28),
+        load_font("segoeui.ttf", 19),
+        load_font("segoeui.ttf", 20),
+        load_font("seguisb.ttf", 14),
     )
-    wave_paths = [WORK / f"scene-{i:02}.wav" for i in range(1, len(SCENES) + 1)]
-    durations = [scene_duration(path) for path in wave_paths]
-    print("Scene durations:", [round(duration, 1) for duration in durations], "total:", round(sum(durations), 1))
+    screenshots = [WORK / scene["image"] for scene in SCENES]
+    audio_files = [WORK / f"scene-{index:02}.wav" for index in range(1, len(SCENES) + 1)]
+    for path in screenshots + audio_files:
+        if not path.is_file():
+            raise FileNotFoundError(f"Required walkthrough source is missing: {path}")
 
-    master_wav = WORK / "narration.wav"
-    with wave.open(str(wave_paths[0]), "rb") as first:
+    durations = [audio_duration(path) for path in audio_files]
+    sources = []
+    for path in screenshots:
+        image = cv2.imread(str(path))
+        if image is None or image.shape[:2] != (HEIGHT, WIDTH):
+            raise ValueError(f"Expected a {WIDTH}x{HEIGHT} browser capture: {path}")
+        sources.append(image)
+
+    narration_path = WORK / "narration.wav"
+    with wave.open(str(audio_files[0]), "rb") as first:
         params = first.getparams()
-    with wave.open(str(master_wav), "wb") as master:
-        master.setparams(params)
-        for path in wave_paths:
+    with wave.open(str(narration_path), "wb") as narration:
+        narration.setparams(params)
+        for path in audio_files:
             with wave.open(str(path), "rb") as segment:
-                if segment.getparams()[:3] != params[:3] or segment.getparams()[4:] != params[4:]:
-                    raise ValueError(f"Voice formats differ: {path}")
-                master.writeframes(segment.readframes(segment.getnframes()))
+                if segment.getparams()[:3] != params[:3]:
+                    raise ValueError(f"Narration audio formats differ: {path}")
+                narration.writeframes(segment.readframes(segment.getnframes()))
 
-    silent_mp4 = WORK / "silent.mp4"
-    writer = cv2.VideoWriter(str(silent_mp4), cv2.VideoWriter_fourcc(*"mp4v"), FPS, (WIDTH, HEIGHT))
+    video_path = DEMO / "project-walkthrough.mp4"
+    rendered_path = WORK / "project-walkthrough-encoded.mp4"
+    silent_path = WORK / "live-prototype-video.mp4"
+    writer = cv2.VideoWriter(str(silent_path), cv2.VideoWriter_fourcc(*"mp4v"), FPS, (WIDTH, HEIGHT))
     if not writer.isOpened():
-        raise RuntimeError("OpenCV could not initialize its MP4 video writer")
+        raise RuntimeError("Could not initialize the walkthrough video writer")
 
-    cues, elapsed, previous = [], 0.0, None
-    poster = DEMO / "project-walkthrough-poster.jpg"
-    for index, (scene, seconds) in enumerate(zip(SCENES, durations)):
-        local_cues = subtitle_cues(scene["narration"], seconds)
+    cues, elapsed = [], 0.0
+    poster_path = DEMO / "project-walkthrough-poster.jpg"
+    for index, (scene, source, duration) in enumerate(zip(SCENES, sources, durations)):
+        local_cues = captions_for(scene["narration"], duration)
         cues.extend((elapsed + start, elapsed + end, text) for start, end, text in local_cues)
-        frame_count = math.ceil(seconds * FPS)
+        frame_count = math.ceil(duration * FPS)
         for frame_index in range(frame_count):
-            current_time = frame_index / FPS
-            progress = min(1.0, current_time / max(seconds, 0.1))
-            caption = next((text for start, end, text in local_cues if start <= current_time < end), local_cues[-1][2])
-            rgb = render_scene(scene, progress, caption, index, fonts)
-            if frame_index < 10 and previous is not None:
-                rgb = cv2.addWeighted(previous, 1 - (frame_index + 1) / 10, rgb, (frame_index + 1) / 10, 0)
-            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
-            writer.write(bgr)
+            scene_time = frame_index / FPS
+            progress = min(1.0, scene_time / max(duration, .1))
+            caption = next((text for start, end, text in local_cues if start <= scene_time < end), local_cues[-1][2])
+            frame = render_frame(source, scene, progress, caption, index, fonts)
+            if index > 0 and frame_index < 8:
+                previous = camera_frame(sources[index - 1], 1, SCENES[index - 1]["focus"])
+                alpha = (frame_index + 1) / 8
+                frame = cv2.addWeighted(previous, 1 - alpha, frame, alpha, 0)
+            writer.write(frame)
             if index == 0 and frame_index == FPS:
-                cv2.imwrite(str(poster), bgr, [cv2.IMWRITE_JPEG_QUALITY, 90])
-        previous = render_scene(scene, 1.0, "", index, fonts)
-        elapsed += frame_count / FPS
+                cv2.imwrite(str(poster_path), frame, [cv2.IMWRITE_JPEG_QUALITY, 91])
+        elapsed += duration
     writer.release()
 
     captions_path = DEMO / "project-walkthrough-en.vtt"
@@ -321,20 +261,25 @@ def main():
         for start, end, text in cues:
             captions.write(f"{timestamp(start)} --> {timestamp(end)}\n{text}\n\n")
 
-    final_mp4 = DEMO / "project-walkthrough.mp4"
     command = [
-        imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-i", str(silent_mp4), "-i", str(master_wav),
-        "-c:v", "libx264", "-preset", "medium", "-crf", "22", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", "-shortest",
-        "-metadata", "title=AeroTwin Prototype Walkthrough",
-        "-metadata", "comment=Explanatory synthetic prototype walkthrough",
-        "-f", "mp4", str(final_mp4),
+        imageio_ffmpeg.get_ffmpeg_exe(), "-y",
+        "-i", str(silent_path), "-i", str(narration_path),
+        "-map", "0:v:0", "-map", "1:a:0",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", "-shortest",
+        "-metadata", "title=AeroTwin Live Prototype Walkthrough",
+        "-metadata", "comment=Current browser prototype screens with Microsoft David narration",
+        "-f", "mp4", str(rendered_path),
     ]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError(result.stderr[-5000:])
-    print("Created:", final_mp4, "bytes:", final_mp4.stat().st_size)
-    print("Captions:", captions_path.stat().st_size, "bytes; poster:", poster.stat().st_size, "bytes")
+    rendered_path.replace(video_path)
+
+    print(f"Rendered {len(SCENES)} actual prototype screens and {sum(durations):.1f}s of narration")
+    print(f"Video: {video_path} ({video_path.stat().st_size} bytes)")
+    print(f"Captions: {captions_path} ({captions_path.stat().st_size} bytes)")
+    print(f"Poster: {poster_path} ({poster_path.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":
