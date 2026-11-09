@@ -31,19 +31,90 @@ def _local_response(question: str, twin: dict[str, Any]) -> str:
     health = twin.get("health", {})
     prediction = twin.get("prediction", {})
     mission = twin.get("mission", {})
+    normalized = question.casefold()
+
+    def mentions(*terms: str) -> bool:
+        return any(term in normalized for term in terms)
+
+    engine_id = twin.get("engine_id", "unknown")
+    fault = prediction.get("predicted_fault_label", "no classification")
+    confidence = prediction.get("confidence", "—")
+    anomaly = prediction.get("anomaly_score", "—")
+    if mentions("maintenance", "recommend", "action", "what should", "what do"):
+        return (
+            f"The prototype guidance for engine {engine_id} is: "
+            f"{maintenance.get('recommended_action', 'Continue monitoring the current twin evidence.')} "
+            f"The classifier reports {fault} at {confidence}% confidence. "
+            "This is not maintenance authorization or a real-engine instruction."
+        )
+    if mentions("temperature", "thermal", "overheat", "hot", "cooling") and not mentions("oil"):
+        signal = next((item for item in prediction.get("explanations", []) if "temperature" in item.get("parameter", "").casefold()), None)
+        expected = f" The listed prototype range is {signal['expected_range']}." if signal else ""
+        return (
+            f"Engine {engine_id} cylinder temperature is {telemetry.get('cylinder_temperature', '—')} °C "
+            f"and exhaust temperature is {telemetry.get('exhaust_temperature', '—')} °C.{expected} "
+            f"The classifier reports {fault} at {confidence}% confidence (anomaly score {anomaly}/100). "
+            "These are synthetic prototype signals, not validated engine limits."
+        )
+    if mentions("oil", "lubricat") or (mentions("pressure") and not mentions("fuel", "manifold")):
+        return (
+            f"Engine {engine_id} oil pressure is {telemetry.get('oil_pressure', '—')} bar and oil temperature is "
+            f"{telemetry.get('oil_temperature', '—')} °C. The classifier reports {fault} at {confidence}% confidence "
+            f"(anomaly score {anomaly}/100). The prototype monitoring range for oil pressure is 3.5–5.0 bar; "
+            "it is not a validated engine limit."
+        )
+    if mentions("vibration", "mechanical", "wear"):
+        return (
+            f"Engine {engine_id} vibration is {telemetry.get('vibration', '—')} mm/s at "
+            f"{telemetry.get('rpm', '—')} RPM. The classifier reports {fault} at {confidence}% confidence "
+            f"(anomaly score {anomaly}/100). This is synthetic evidence, not a maintenance diagnosis."
+        )
+    if mentions("fuel", "flow", "manifold"):
+        return (
+            f"Engine {engine_id} fuel flow is {telemetry.get('fuel_flow', '—')} L/h, fuel pressure is "
+            f"{telemetry.get('fuel_pressure', '—')} bar, and manifold pressure is "
+            f"{telemetry.get('manifold_pressure', '—')} kPa. The classifier reports {fault} at {confidence}% confidence."
+        )
+    if mentions("mission", "reliability", "flight", "risk"):
+        return (
+            f"The simulated mission reliability for engine {engine_id} is "
+            f"{mission.get('reliability_score', '—')}% ({mission.get('mission_risk', 'unknown')} risk). "
+            f"Current engine health is {health.get('overall', '—')}% and the classifier reports {fault} "
+            f"at {confidence}% confidence. This is a simulation indicator, not a flight decision."
+        )
+    if mentions("rul", "remaining useful", "remaining life", "life left", "hours left"):
+        return (
+            f"The simulated remaining-life indicator for engine {engine_id} is "
+            f"{twin.get('estimated_rul_hours', '—')} hours. This is derived from synthetic prototype data, "
+            "not a certified service-life estimate."
+        )
+    if mentions("fault", "anomal", "predict", "classifier", "signal", "concern", "explain"):
+        explanations = prediction.get("explanations", [])
+        leading = max(explanations, key=lambda item: item.get("contribution", 0), default=None)
+        evidence = (
+            f" The highest-contribution listed signal is {leading.get('parameter')} at "
+            f"{leading.get('current_value')} {leading.get('unit')} (expected {leading.get('expected_range')})."
+            if leading else ""
+        )
+        return (
+            f"Engine {engine_id} is classified as {fault} with {confidence}% model confidence; "
+            f"anomaly score is {anomaly}/100.{evidence} Confidence is not certainty, and the classifier "
+            "was trained on synthetic data."
+        )
+    if not question.strip():
+        return "Ask a question about the current twin data."
+
     findings = [
-        f"Engine {twin.get('engine_id', 'unknown')} is in {twin.get('operating_state', 'unknown')} state.",
-        f"Health is {health.get('overall', '—')}% ({health.get('state', 'unknown')}); the synthetic model predicts {prediction.get('predicted_fault_label', 'no classification')} with {prediction.get('confidence', '—')}% confidence and anomaly score {prediction.get('anomaly_score', '—')}/100.",
+        f"Engine {engine_id} is in {twin.get('operating_state', 'unknown')} state.",
+        f"Health is {health.get('overall', '—')}% ({health.get('state', 'unknown')}); the synthetic model predicts {fault} with {confidence}% confidence and anomaly score {anomaly}/100.",
         f"Current telemetry: {telemetry.get('cylinder_temperature', '—')} °C cylinder temperature, {telemetry.get('oil_pressure', '—')} bar oil pressure, {telemetry.get('vibration', '—')} mm/s vibration, and {telemetry.get('rpm', '—')} RPM.",
         f"Simulated mission reliability is {mission.get('reliability_score', '—')}%.",
     ]
     explanations = prediction.get("explanations", [])
     if explanations:
-        leading = explanations[0]
-        findings.append(f"The strongest model signal shown is {leading.get('parameter', 'unknown')} at {leading.get('current_value', '—')} {leading.get('unit', '')} (expected {leading.get('expected_range', 'range unavailable')}).")
-    findings.append("This offline response summarizes current evidence only; the engine model uses synthetic training data and is not validated for operational use.")
-    if not question.strip():
-        return "Ask a question about the current twin data."
+        leading = max(explanations, key=lambda item: item.get("contribution", 0))
+        findings.append(f"The highest-contribution listed signal is {leading.get('parameter', 'unknown')} at {leading.get('current_value', '—')} {leading.get('unit', '')} (expected {leading.get('expected_range', 'range unavailable')}).")
+    findings.append("This evidence summary is based on synthetic training data and is not validated for operational use.")
     return " ".join(findings)
 
 

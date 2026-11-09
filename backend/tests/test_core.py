@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,66 @@ from app.ml import InferenceService
 from app.simulation import EngineSimulator
 from app.telemetry_analysis import analyze_csv
 from app.virtual_uav import VirtualUAV
+from app.assistant import _local_response, answer
+
+
+def test_local_assistant_answers_the_requested_signal_with_live_evidence():
+    twin = {
+        "engine_id": "APT-MALE-SIM-01",
+        "operating_state": "RUNNING",
+        "telemetry": {"oil_pressure": 2.8, "oil_temperature": 108, "cylinder_temperature": 174, "exhaust_temperature": 492, "vibration": 3.1, "rpm": 2200},
+        "health": {"overall": 78, "state": "WATCH"},
+        "prediction": {"predicted_fault_label": "Lubrication Fault", "confidence": 82.4, "anomaly_score": 61, "explanations": []},
+        "mission": {"reliability_score": 73, "mission_risk": "MODERATE"},
+        "maintenance": {"recommended_action": "Continue synthetic monitoring."},
+        "estimated_rul_hours": 520,
+    }
+
+    oil_answer = _local_response("What is the oil pressure?", twin)
+    mission_answer = _local_response("What is the mission risk?", twin)
+    fuel_answer = _local_response("What is the fuel pressure?", twin)
+
+    assert "oil pressure is 2.8 bar" in oil_answer
+    assert "73% (MODERATE risk)" in mission_answer
+    assert "fuel pressure is — bar" in fuel_answer
+    assert "oil pressure" not in fuel_answer
+    assert oil_answer != mission_answer
+
+
+def test_configured_assistant_sends_bearer_key_server_side(monkeypatch):
+    import app.assistant as assistant
+
+    request_headers = {}
+
+    class Response:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"choices": [{"message": {"content": "Grounded response."}}]}
+
+    class Client:
+        def __init__(self, timeout):
+            assert timeout == 25
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            return None
+
+        async def post(self, _url, headers, json):
+            request_headers.update(headers)
+            assert json["messages"][0]["role"] == "system"
+            return Response()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-server-key")
+    monkeypatch.setattr(assistant.httpx, "AsyncClient", Client)
+
+    result = asyncio.run(answer("Summarize engine health", {"engine_id": "APT-MALE-SIM-01"}))
+
+    assert request_headers["Authorization"] == "Bearer test-server-key"
+    assert result["answer"] == "Grounded response."
 
 
 def test_correlated_synthetic_telemetry_has_required_fields():

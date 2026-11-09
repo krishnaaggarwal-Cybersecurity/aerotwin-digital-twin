@@ -6,11 +6,12 @@ import { ComponentRiskManager } from './ComponentRiskManager'
 import type { ComponentId, EngineTwinState, RiskLevel } from './types'
 import './engineViewer.css'
 
-useGLTF.setDecoderPath('/draco/')
+const ASSET_BASE = (import.meta as any).env?.BASE_URL || '/'
+useGLTF.setDecoderPath(`${ASSET_BASE}draco/`)
 
-const MODEL_URL = '/models/wright-flyer-engine.glb'
+const MODEL_URL = `${ASSET_BASE}models/wright-flyer-engine.glb`
 
-const riskColor = (level: RiskLevel) => ({ HEALTHY: '#55d8b0', WARNING: '#f2b65e', HIGH: '#ff6b55', CRITICAL: '#ff344b' }[level])
+const riskColor = (level: RiskLevel) => ({ HEALTHY: '#c7ef70', WARNING: '#f2b65e', HIGH: '#ff6b55', CRITICAL: '#ff344b' }[level])
 
 const riskClass = (level: RiskLevel) => level.toLowerCase().replace(' ', '-')
 
@@ -54,9 +55,9 @@ function ManualOrbitControls() {
 
 function SceneLights() {
   return <>
-    <hemisphereLight args={['#dce8ef', '#09232b', 2.05]} />
+    <hemisphereLight args={['#e7e9d8', '#161b13', 2.05]} />
     <directionalLight position={[4.5, 5.4, 4.6]} intensity={2.5} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-    <directionalLight position={[-4, 1.6, -3]} color="#8cc8dc" intensity={1.25} />
+    <directionalLight position={[-4, 1.6, -3]} color="#c7ef70" intensity={1.25} />
     <pointLight position={[0, -1, 3]} color="#f8d5a9" intensity={0.7} distance={8} />
   </>
 }
@@ -89,7 +90,7 @@ function RiskMarker({ component, position, onSelect }: { component: EngineTwinSt
 function ComponentZone({ component, position, selected, inspectionMode, onSelect }: { component: EngineTwinState['components'][ComponentId]; position: [number, number, number]; selected: boolean; inspectionMode: boolean; onSelect: () => void }) {
   const [hovered, setHovered] = useState(false)
   const visible = selected || hovered || inspectionMode
-  const color = component.riskLevel === 'HEALTHY' ? '#63d7e4' : riskColor(component.riskLevel)
+  const color = component.riskLevel === 'HEALTHY' ? '#c7ef70' : riskColor(component.riskLevel)
   return <group position={position}>
     <mesh
       onClick={(event) => { event.stopPropagation(); onSelect() }}
@@ -168,8 +169,8 @@ function ViewerScene({ state, selected, inspectionMode, onSelect, onReady, onErr
     camera={{ position: [3.87, 2.32, 4.35], fov: 38, near: .01, far: 100 }}
     gl={{ antialias: true, powerPreference: 'high-performance' }}
   >
-    <color attach="background" args={['#07151d']} />
-    <fog attach="fog" args={['#07151d', 8, 17]} />
+    <color attach="background" args={['#11150f']} />
+    <fog attach="fog" args={['#11150f', 8, 17]} />
     <SceneLights />
     <Suspense fallback={<CanvasLoader />}>
       <ModelBoundary onError={onError} fallback={<FallbackEngine retry={retry} />}>
@@ -177,7 +178,7 @@ function ViewerScene({ state, selected, inspectionMode, onSelect, onReady, onErr
       </ModelBoundary>
     </Suspense>
     <ManualOrbitControls />
-    <gridHelper args={[12, 24, '#25515d', '#16333e']} position={[0, -1.8, 0]} />
+    <gridHelper args={[12, 24, '#718b3f', '#293221']} position={[0, -1.8, 0]} />
   </Canvas>
 }
 

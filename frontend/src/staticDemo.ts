@@ -27,6 +27,48 @@ let route = 'coastal-survey'
 let routeElapsed = 0
 let routeRunning = true
 
+export function staticAssistantResponse(question: string, twin: Record<string, any>) {
+  const normalized = question.toLowerCase()
+  const telemetry = twin.telemetry
+  const prediction = twin.prediction
+  const engine = twin.engine_id
+  const fault = prediction.predicted_fault_label
+  const confidence = prediction.confidence
+  const anomaly = prediction.anomaly_score
+  const contains = (...terms: string[]) => terms.some(term => normalized.includes(term))
+
+  if (contains('maintenance', 'recommend', 'action', 'what should', 'what do')) {
+    return `Prototype guidance for engine ${engine}: ${twin.maintenance.recommended_action} The current classifier reports ${fault} at ${confidence}% confidence. This is not maintenance authorization or a real-engine instruction.`
+  }
+  if (contains('temperature', 'thermal', 'overheat', 'hot', 'cooling') && !contains('oil')) {
+    const signal = prediction.explanations.find((item: any) => item.parameter.toLowerCase().includes('temperature'))
+    const range = signal ? ` The configured prototype range is ${signal.expected_range}.` : ''
+    return `Engine ${engine} cylinder temperature is ${telemetry.cylinder_temperature} °C and exhaust temperature is ${telemetry.exhaust_temperature} °C.${range} The current classifier reports ${fault} at ${confidence}% confidence (anomaly score ${anomaly}/100). These are synthetic prototype signals, not validated engine limits.`
+  }
+  if (contains('oil', 'lubricat') || (contains('pressure') && !contains('fuel', 'manifold'))) {
+    return `Engine ${engine} oil pressure is ${telemetry.oil_pressure} bar and oil temperature is ${telemetry.oil_temperature} °C. The classifier reports ${fault} at ${confidence}% confidence (anomaly score ${anomaly}/100). The prototype oil-pressure range is 3.5–5.0 bar; it is not a validated engine limit.`
+  }
+  if (contains('vibration', 'mechanical', 'wear')) {
+    return `Engine ${engine} vibration is ${telemetry.vibration} mm/s at ${telemetry.rpm} RPM. The classifier reports ${fault} at ${confidence}% confidence (anomaly score ${anomaly}/100). This is synthetic evidence, not a maintenance diagnosis.`
+  }
+  if (contains('fuel', 'flow', 'manifold')) {
+    return `Engine ${engine} fuel flow is ${telemetry.fuel_flow} L/h, fuel pressure is ${telemetry.fuel_pressure} bar, and manifold pressure is ${telemetry.manifold_pressure} kPa. The classifier reports ${fault} at ${confidence}% confidence.`
+  }
+  if (contains('mission', 'reliability', 'flight', 'risk')) {
+    return `The simulated mission reliability for engine ${engine} is ${twin.mission.reliability_score}% (${twin.mission.mission_risk} risk). Engine health is ${twin.health.overall}% and the classifier reports ${fault} at ${confidence}% confidence. This is not a flight decision.`
+  }
+  if (contains('rul', 'remaining useful', 'remaining life', 'life left', 'hours left')) {
+    return `The simulated remaining-life indicator for engine ${engine} is ${twin.estimated_rul_hours} hours. It is calculated from synthetic prototype data, not a certified service-life estimate.`
+  }
+  if (contains('fault', 'anomal', 'predict', 'classifier', 'signal', 'concern', 'explain')) {
+    const leading = [...prediction.explanations].sort((a: any, b: any) => b.contribution - a.contribution)[0]
+    const evidence = leading ? ` The strongest listed signal is ${leading.parameter} at ${leading.current_value} ${leading.unit} (expected ${leading.expected_range}).` : ''
+    return `Engine ${engine} is classified as ${fault} with ${confidence}% model confidence; anomaly score is ${anomaly}/100.${evidence} Confidence is not certainty, and the classifier uses synthetic data.`
+  }
+
+  return `Engine ${engine} is ${twin.health.state} at ${twin.health.overall}% health. The synthetic classifier indicates ${fault} with ${confidence}% confidence; anomaly score is ${anomaly}/100. Cylinder temperature is ${telemetry.cylinder_temperature} °C, oil pressure is ${telemetry.oil_pressure} bar, and simulated mission reliability is ${twin.mission.reliability_score}%. Ask about a sensor, fault, maintenance guidance, remaining-life indicator, or mission risk.`
+}
+
 export function staticSnapshot(engineId = selectedEngineId) {
   const state = fleetState.find(vehicle => vehicle.engine_id === engineId) || fleetState[0]
   const severity = state.active_fault === 'normal' ? 0 : .42 + Math.min(.58, state.tick * state.speed / 32)
