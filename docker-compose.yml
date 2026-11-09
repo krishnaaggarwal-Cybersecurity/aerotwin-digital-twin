@@ -1,0 +1,15 @@
+services:
+  aerotwin:
+    build: .
+    ports:
+      - "8000:10000"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY-}
+      OPENAI_MODEL: ${OPENAI_MODEL-gpt-4o-mini}
+    volumes:
+      - aerotwin-data:/app/backend/data
+      - aerotwin-models:/app/backend/models
+
+volumes:
+  aerotwin-data:
+  aerotwin-models:

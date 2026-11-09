@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: aerotwin-digital-twin
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
