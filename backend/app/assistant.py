@@ -27,10 +27,14 @@ def assistant_status() -> dict[str, Any]:
 
 
 def _local_response(question: str, twin: dict[str, Any]) -> str:
+    if not question.strip():
+        return "Ask a question about the current twin data."
+
     telemetry = twin.get("telemetry", {})
     health = twin.get("health", {})
     prediction = twin.get("prediction", {})
     mission = twin.get("mission", {})
+    maintenance = twin.get("maintenance", {})
     normalized = question.casefold()
 
     def mentions(*terms: str) -> bool:
@@ -40,13 +44,6 @@ def _local_response(question: str, twin: dict[str, Any]) -> str:
     fault = prediction.get("predicted_fault_label", "no classification")
     confidence = prediction.get("confidence", "—")
     anomaly = prediction.get("anomaly_score", "—")
-    if mentions("maintenance", "recommend", "action", "what should", "what do"):
-        return (
-            f"The prototype guidance for engine {engine_id} is: "
-            f"{maintenance.get('recommended_action', 'Continue monitoring the current twin evidence.')} "
-            f"The classifier reports {fault} at {confidence}% confidence. "
-            "This is not maintenance authorization or a real-engine instruction."
-        )
     if mentions("temperature", "thermal", "overheat", "hot", "cooling") and not mentions("oil"):
         signal = next((item for item in prediction.get("explanations", []) if "temperature" in item.get("parameter", "").casefold()), None)
         expected = f" The listed prototype range is {signal['expected_range']}." if signal else ""
@@ -75,7 +72,7 @@ def _local_response(question: str, twin: dict[str, Any]) -> str:
             f"{telemetry.get('fuel_pressure', '—')} bar, and manifold pressure is "
             f"{telemetry.get('manifold_pressure', '—')} kPa. The classifier reports {fault} at {confidence}% confidence."
         )
-    if mentions("mission", "reliability", "flight", "risk"):
+    if mentions("mission", "reliability", "risk"):
         return (
             f"The simulated mission reliability for engine {engine_id} is "
             f"{mission.get('reliability_score', '—')}% ({mission.get('mission_risk', 'unknown')} risk). "
@@ -87,6 +84,40 @@ def _local_response(question: str, twin: dict[str, Any]) -> str:
             f"The simulated remaining-life indicator for engine {engine_id} is "
             f"{twin.get('estimated_rul_hours', '—')} hours. This is derived from synthetic prototype data, "
             "not a certified service-life estimate."
+        )
+    if mentions("rpm", "engine speed", "revolutions"):
+        return (
+            f"Engine {engine_id} is running at {telemetry.get('rpm', '—')} RPM with "
+            f"{telemetry.get('load', '—')}% load and {telemetry.get('throttle', '—')}% throttle. "
+            "These are synthetic simulation values."
+        )
+    if mentions("altitude", "airspeed", "air speed", "flight speed"):
+        return (
+            f"The virtual aircraft linked to engine {engine_id} is at "
+            f"{telemetry.get('altitude', '—')} m altitude and {telemetry.get('airspeed', '—')} kt airspeed. "
+            "These are simulated values, not real aircraft navigation data."
+        )
+    if mentions("health", "condition", "overall"):
+        weakest = maintenance.get("weakest_subsystem", "unavailable").replace("_", " ")
+        return (
+            f"Engine {engine_id} condition is {health.get('state', 'unknown')} at "
+            f"{health.get('overall', '—')}% health. Its weakest tracked subsystem is {weakest}; "
+            f"the simulated remaining-life indicator is {twin.get('estimated_rul_hours', '—')} hours and "
+            f"mission reliability is {mission.get('reliability_score', '—')}%. These indicators use synthetic data."
+        )
+    if mentions("summary", "summarize", "overview", "current status"):
+        return (
+            f"Engine {engine_id} is {twin.get('operating_state', 'unknown').lower()}: "
+            f"health {health.get('overall', '—')}%, {fault} classification at {confidence}% confidence, "
+            f"anomaly {anomaly}/100, RPM {telemetry.get('rpm', '—')}, and simulated mission reliability "
+            f"{mission.get('reliability_score', '—')}%."
+        )
+    if mentions("maintenance", "recommend", "service", "what should i do", "what should we do"):
+        return (
+            f"The prototype guidance for engine {engine_id} is: "
+            f"{maintenance.get('recommended_action', 'Continue monitoring the current twin evidence.')} "
+            f"The classifier reports {fault} at {confidence}% confidence. "
+            "This is not maintenance authorization or a real-engine instruction."
         )
     if mentions("fault", "anomal", "predict", "classifier", "signal", "concern", "explain"):
         explanations = prediction.get("explanations", [])
@@ -101,21 +132,18 @@ def _local_response(question: str, twin: dict[str, Any]) -> str:
             f"anomaly score is {anomaly}/100.{evidence} Confidence is not certainty, and the classifier "
             "was trained on synthetic data."
         )
-    if not question.strip():
-        return "Ask a question about the current twin data."
+    if mentions("what", "how", "why", "when", "where", "which", "who"):
+        return (
+            f"I couldn't identify a supported twin metric in “{question.strip()[:120]}”. "
+            "Ask about engine health, RPM, temperature, oil pressure, vibration, fuel flow, altitude, "
+            "mission reliability, fault evidence, or the remaining-life indicator."
+        )
 
-    findings = [
-        f"Engine {engine_id} is in {twin.get('operating_state', 'unknown')} state.",
-        f"Health is {health.get('overall', '—')}% ({health.get('state', 'unknown')}); the synthetic model predicts {fault} with {confidence}% confidence and anomaly score {anomaly}/100.",
-        f"Current telemetry: {telemetry.get('cylinder_temperature', '—')} °C cylinder temperature, {telemetry.get('oil_pressure', '—')} bar oil pressure, {telemetry.get('vibration', '—')} mm/s vibration, and {telemetry.get('rpm', '—')} RPM.",
-        f"Simulated mission reliability is {mission.get('reliability_score', '—')}%.",
-    ]
-    explanations = prediction.get("explanations", [])
-    if explanations:
-        leading = max(explanations, key=lambda item: item.get("contribution", 0))
-        findings.append(f"The highest-contribution listed signal is {leading.get('parameter', 'unknown')} at {leading.get('current_value', '—')} {leading.get('unit', '')} (expected {leading.get('expected_range', 'range unavailable')}).")
-    findings.append("This evidence summary is based on synthetic training data and is not validated for operational use.")
-    return " ".join(findings)
+    return (
+        f"Engine {engine_id} is {twin.get('operating_state', 'unknown')} with "
+        f"{health.get('overall', '—')}% health and simulated mission reliability "
+        f"{mission.get('reliability_score', '—')}%. This evidence summary uses synthetic data."
+    )
 
 
 async def answer(question: str, twin: dict[str, Any]) -> dict[str, Any]:

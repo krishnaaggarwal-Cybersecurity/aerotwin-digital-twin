@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight, Expand, Minimize, Pause, Play, Volume2, Volu
 import './videoCarousel.css'
 
 const DEMO_VIDEOS = [
-  { src: '/demo/project-demo-1.mp4', label: 'Video 1' },
-  { src: '/demo/project-demo-2.mp4', label: 'Video 2' },
+  { src: `${import.meta.env.BASE_URL}demo/project-demo-1.mp4`, label: 'Video 1' },
+  { src: `${import.meta.env.BASE_URL}demo/project-demo-2.mp4`, label: 'Video 2' },
 ] as const
 
 const HOLD_AFTER_END_MS = 1000

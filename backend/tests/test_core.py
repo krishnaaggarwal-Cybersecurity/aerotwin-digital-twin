@@ -29,12 +29,17 @@ def test_local_assistant_answers_the_requested_signal_with_live_evidence():
     oil_answer = _local_response("What is the oil pressure?", twin)
     mission_answer = _local_response("What is the mission risk?", twin)
     fuel_answer = _local_response("What is the fuel pressure?", twin)
+    vibration_answer = _local_response("What do you think about vibration?", twin)
+    unknown_answer = _local_response("What is tomorrow's weather?", twin)
 
     assert "oil pressure is 2.8 bar" in oil_answer
     assert "73% (MODERATE risk)" in mission_answer
     assert "fuel pressure is — bar" in fuel_answer
+    assert "vibration is 3.1 mm/s" in vibration_answer
+    assert "couldn't identify a supported twin metric" in unknown_answer
     assert "oil pressure" not in fuel_answer
     assert oil_answer != mission_answer
+    assert vibration_answer != unknown_answer
 
 
 def test_configured_assistant_sends_bearer_key_server_side(monkeypatch):

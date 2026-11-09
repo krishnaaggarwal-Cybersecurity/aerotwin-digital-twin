@@ -37,9 +37,6 @@ export function staticAssistantResponse(question: string, twin: Record<string, a
   const anomaly = prediction.anomaly_score
   const contains = (...terms: string[]) => terms.some(term => normalized.includes(term))
 
-  if (contains('maintenance', 'recommend', 'action', 'what should', 'what do')) {
-    return `Prototype guidance for engine ${engine}: ${twin.maintenance.recommended_action} The current classifier reports ${fault} at ${confidence}% confidence. This is not maintenance authorization or a real-engine instruction.`
-  }
   if (contains('temperature', 'thermal', 'overheat', 'hot', 'cooling') && !contains('oil')) {
     const signal = prediction.explanations.find((item: any) => item.parameter.toLowerCase().includes('temperature'))
     const range = signal ? ` The configured prototype range is ${signal.expected_range}.` : ''
@@ -60,13 +57,28 @@ export function staticAssistantResponse(question: string, twin: Record<string, a
   if (contains('rul', 'remaining useful', 'remaining life', 'life left', 'hours left')) {
     return `The simulated remaining-life indicator for engine ${engine} is ${twin.estimated_rul_hours} hours. It is calculated from synthetic prototype data, not a certified service-life estimate.`
   }
+  if (contains('rpm', 'engine speed', 'revolutions')) {
+    return `Engine ${engine} is running at ${Math.round(telemetry.rpm)} RPM with ${telemetry.load}% load and ${telemetry.throttle}% throttle. These are live synthetic simulation values.`
+  }
+  if (contains('altitude', 'airspeed', 'air speed', 'flight speed')) {
+    return `The virtual aircraft linked to engine ${engine} is at ${telemetry.altitude} m altitude and ${telemetry.airspeed} kt airspeed. These are simulated values, not real aircraft navigation data.`
+  }
+  if (contains('health', 'condition', 'overall')) {
+    return `Engine ${engine} condition is ${twin.health.state} at ${twin.health.overall}% health. Its weakest tracked subsystem is ${twin.maintenance.weakest_subsystem.replace(/_/g, ' ')}, estimated remaining-life indicator is ${twin.estimated_rul_hours} simulated hours, and mission reliability is ${twin.mission.reliability_score}%. These indicators use synthetic data.`
+  }
+  if (contains('summary', 'summarize', 'overview', 'current status')) {
+    return `Engine ${engine} is ${twin.operating_state.toLowerCase()}: health ${twin.health.overall}%, ${fault} classification at ${confidence}% confidence, anomaly ${anomaly}/100, RPM ${Math.round(telemetry.rpm)}, and simulated mission reliability ${twin.mission.reliability_score}%.`
+  }
+  if (contains('maintenance', 'recommend', 'service', 'what should i do', 'what should we do')) {
+    return `Prototype guidance for engine ${engine}: ${twin.maintenance.recommended_action} The current classifier reports ${fault} at ${confidence}% confidence. This is not maintenance authorization or a real-engine instruction.`
+  }
   if (contains('fault', 'anomal', 'predict', 'classifier', 'signal', 'concern', 'explain')) {
     const leading = [...prediction.explanations].sort((a: any, b: any) => b.contribution - a.contribution)[0]
     const evidence = leading ? ` The strongest listed signal is ${leading.parameter} at ${leading.current_value} ${leading.unit} (expected ${leading.expected_range}).` : ''
     return `Engine ${engine} is classified as ${fault} with ${confidence}% model confidence; anomaly score is ${anomaly}/100.${evidence} Confidence is not certainty, and the classifier uses synthetic data.`
   }
 
-  return `Engine ${engine} is ${twin.health.state} at ${twin.health.overall}% health. The synthetic classifier indicates ${fault} with ${confidence}% confidence; anomaly score is ${anomaly}/100. Cylinder temperature is ${telemetry.cylinder_temperature} °C, oil pressure is ${telemetry.oil_pressure} bar, and simulated mission reliability is ${twin.mission.reliability_score}%. Ask about a sensor, fault, maintenance guidance, remaining-life indicator, or mission risk.`
+  return `I couldn't map “${question.trim().slice(0, 120)}” to a specific twin metric. Try asking about engine health, RPM, temperature, oil pressure, vibration, fuel flow, altitude, mission reliability, fault evidence, or the remaining-life indicator.`
 }
 
 export function staticSnapshot(engineId = selectedEngineId) {
