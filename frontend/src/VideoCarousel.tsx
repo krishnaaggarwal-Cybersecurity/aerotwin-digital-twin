@@ -3,8 +3,14 @@ import { ChevronLeft, ChevronRight, Expand, Minimize, Pause, Play, Volume2, Volu
 import './videoCarousel.css'
 
 const DEMO_VIDEOS = [
-  { src: `${import.meta.env.BASE_URL}demo/project-demo-1.mp4`, label: 'Video 1' },
-  { src: `${import.meta.env.BASE_URL}demo/project-demo-2.mp4`, label: 'Video 2' },
+  {
+    src: `${import.meta.env.BASE_URL}demo/project-walkthrough.mp4`,
+    poster: `${import.meta.env.BASE_URL}demo/project-walkthrough-poster.jpg`,
+    captions: `${import.meta.env.BASE_URL}demo/project-walkthrough-en.vtt`,
+    label: 'Prototype walkthrough',
+  },
+  { src: `${import.meta.env.BASE_URL}demo/project-demo-1.mp4`, label: 'Emergency concept clip' },
+  { src: `${import.meta.env.BASE_URL}demo/project-demo-2.mp4`, label: 'Flight HUD concept clip' },
 ] as const
 
 const HOLD_AFTER_END_MS = 1000
@@ -37,6 +43,7 @@ export function VideoCarousel() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [captionsEnabled, setCaptionsEnabled] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState(0)
   const [slideProgress, setSlideProgress] = useState(0)
@@ -85,6 +92,12 @@ export function VideoCarousel() {
     mutedRef.current = isMuted
     videoRefs.current.forEach(video => { if (video) video.muted = isMuted })
   }, [isMuted])
+
+  useEffect(() => {
+    videoRefs.current.forEach(video => {
+      if (video?.textTracks?.length) video.textTracks[0].mode = captionsEnabled ? 'showing' : 'hidden'
+    })
+  }, [activeIndex, captionsEnabled, available])
 
   useEffect(() => {
     const updateFullscreen = () => setIsFullscreen(document.fullscreenElement === carouselRef.current)
@@ -253,6 +266,7 @@ export function VideoCarousel() {
             <video
               ref={element => { videoRefs.current[index] = element }}
               src={video.src}
+              poster={'poster' in video ? video.poster : undefined}
               preload={isActive ? 'auto' : 'metadata'}
               muted={isMuted}
               playsInline
@@ -264,6 +278,7 @@ export function VideoCarousel() {
                 if (isActive) setMediaTime({ current: event.currentTarget.currentTime, duration: event.currentTarget.duration || 0 })
               }}
             >
+              {'captions' in video && <track kind="captions" src={video.captions} srcLang="en" label="English" default />}
               Your browser does not support HTML5 video.
             </video>
           </div>
@@ -280,6 +295,7 @@ export function VideoCarousel() {
           <div className="video-carousel-actions">
             <button type="button" aria-label={isPlaying ? 'Pause video' : 'Play video'} onClick={togglePlayback}>{isPlaying ? <Pause /> : <Play />}</button>
             <button type="button" aria-label={isMuted ? 'Unmute video' : 'Mute video'} onClick={() => setIsMuted(value => !value)}>{isMuted ? <VolumeX /> : <Volume2 />}</button>
+            {'captions' in DEMO_VIDEOS[activeIndex] && <button className={captionsEnabled ? 'is-selected' : ''} type="button" aria-label={captionsEnabled ? 'Turn captions off' : 'Turn captions on'} aria-pressed={captionsEnabled} onClick={() => setCaptionsEnabled(value => !value)}>CC</button>}
             <button type="button" aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen video'} onClick={toggleFullscreen}>{isFullscreen ? <Minimize /> : <Expand />}</button>
           </div>
         </div>

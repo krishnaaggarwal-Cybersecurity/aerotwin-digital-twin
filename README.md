@@ -163,7 +163,9 @@ The **Data Lab** accepts CSV files up to 2 MB / 5,000 rows, requires at least ei
 
 ## Video integration
 
-Place your own MP4 at `frontend/public/demo/project-demo.mp4`. The Video page checks for it and displays a native HTML5 player only when the file exists—there is no broken player placeholder. No code change is necessary.
+The Project Video page opens on a narrated, captioned walkthrough covering the synthetic telemetry, digital twin, ML evidence, virtual fleet and aircraft, assistant, CSV analysis, and safety boundaries. The two shorter supplied clips are illustrative emergency-response and flight-HUD concepts; they are not connected prototype footage or evidence of real crash detection or SOS dispatch. The English narration captions can be toggled in the player.
+
+To regenerate the walkthrough on Windows, install Python packages `opencv-python`, `Pillow`, `numpy`, and `imageio-ffmpeg`, then run `powershell -ExecutionPolicy Bypass -File scripts/generate_aerotwin_narration.ps1` followed by `python scripts/render_aerotwin_walkthrough.py`. These commands write the voice segments, MP4, English WebVTT captions, and poster under `frontend/public/demo/`.
 
 ## Tests and verification
 

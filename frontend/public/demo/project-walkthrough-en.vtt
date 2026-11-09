@@ -1,0 +1,77 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:07.041
+Welcome to AeroTwin: an interactive digital-twin prototype for monitoring a synthetic aero piston engine.
+
+00:00:07.041 --> 00:00:15.087
+This short walkthrough explains the two concept clips, then shows what the working prototype actually does.
+
+00:00:15.087 --> 00:00:19.667
+The first supplied clip depicts an aircraft emergency scenario.
+
+00:00:19.667 --> 00:00:23.738
+The second shows a flight-monitoring and safe-landing concept.
+
+00:00:23.738 --> 00:00:26.283
+Both are illustrative visuals only.
+
+00:00:26.283 --> 00:00:37.478
+They are not recordings of AeroTwin, real UAV footage from this application, or evidence that crash detection or emergency dispatch is connected.
+
+00:00:37.478 --> 00:00:48.811
+In the prototype, a simulator generates changing engine telemetry: RPM, temperatures, oil and fuel pressures, fuel flow, vibration, and operating conditions.
+
+00:00:48.811 --> 00:00:59.064
+The digital twin updates from that stream, and the dashboard visualizes the same selected engine state as it changes.
+
+00:00:59.064 --> 00:01:09.603
+For early warning, an Isolation Forest looks for unusual sensor patterns, while a Random Forest classifies simulated fault types.
+
+00:01:09.603 --> 00:01:15.149
+The interface shows the predicted class, confidence, and contributing signals.
+
+00:01:15.149 --> 00:01:21.805
+Both models were trained on generated synthetic data, not validated real-engine recordings.
+
+00:01:21.805 --> 00:01:26.432
+Component health and the remaining-life indicator are simulated estimates.
+
+00:01:26.432 --> 00:01:36.200
+Mission reliability combines twin health and simulated mission phases to make the impact of a fault easier to understand.
+
+00:01:36.200 --> 00:01:41.341
+These numbers are demonstrations, not certified airworthiness or service-life decisions.
+
+00:01:41.341 --> 00:01:46.136
+The fleet view lets you select among independent virtual engines.
+
+00:01:46.136 --> 00:01:51.891
+The virtual UAV page visualizes a route linked to the selected engine.
+
+00:01:51.891 --> 00:01:55.728
+You can pause, resume, and inject demonstration faults.
+
+00:01:55.728 --> 00:02:01.962
+These controls affect software simulation only; they do not pilot a real aircraft.
+
+00:02:01.962 --> 00:02:06.913
+The assistant receives the latest twin snapshot with each question.
+
+00:02:06.913 --> 00:02:16.320
+On the public static site, it uses browser-side evidence routing; a backend can optionally call a configured language model.
+
+00:02:16.320 --> 00:02:23.251
+The Data Lab checks uploaded CSV signals for configured limit breaches and persistent trends.
+
+00:02:23.251 --> 00:02:26.717
+Prototype thresholds are not validated operating limits.
+
+00:02:26.717 --> 00:02:32.692
+The dashboard SOS drill only previews a simulated incident brief.
+
+00:02:32.692 --> 00:02:40.460
+It does not detect a real crash, locate responders, or send an alert.
+
+00:02:40.460 --> 00:02:55.997
+In summary, AeroTwin demonstrates a connected monitoring workflow: telemetry, twin, anomaly evidence, fault classification, health, mission context, and operator-facing explanations, all inside a safe synthetic prototype.
+
