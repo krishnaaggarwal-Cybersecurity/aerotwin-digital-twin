@@ -6,6 +6,8 @@
 
 AeroTwin is a local-first software research demonstrator. It generates correlated synthetic engine telemetry, evolves a virtual engine state continuously, detects anomalies, predicts fault classes with local ML models, estimates a simulated RUL indicator, and shows the resulting simulated mission reliability and high-level maintenance guidance.
 
+**Live browser-only demo:** [Open AeroTwin on GitHub Pages](https://krishnaaggarwal-cybersecurity.github.io/aerotwin-digital-twin/). This static demo runs a clearly labeled synthetic simulation in the browser; it does not connect to a backend, real engine, or UAV. Run the full local stack for the FastAPI and optional AI-backed features.
+
 > Safety boundary: this project has no physical engine/UAV interface and no weapons, targeting, engagement, flight-control, or autonomous decision functionality. Values, evaluations, and reliability outputs are synthetic and are not certified aerospace data.
 
 ## What it demonstrates

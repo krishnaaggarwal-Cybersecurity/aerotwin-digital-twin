@@ -11,6 +11,7 @@ import {
   Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { VideoCarousel } from './VideoCarousel'
+import { staticCommand, staticControlVehicle, staticCsvAnalysis, staticFleet, staticSelect, staticSnapshot, staticTick, staticUav, staticUavControl } from './staticDemo'
 
 const DigitalTwin3DPanel = lazy(() => import('./twin3d/DigitalTwin3DPanel').then(module => ({ default: module.DigitalTwin3DPanel })))
 
@@ -21,6 +22,7 @@ type Twin = Record<string, any>
 // explicit API URL when it is not hosted behind that proxy.
 const API_BASE = (import.meta as any).env?.DEV ? '' : (import.meta as any).env?.VITE_API_URL || ''
 const api = (path: string) => `${API_BASE}${path}`
+const STATIC_DEMO = Boolean((import.meta as any).env?.VITE_STATIC_DEMO)
 
 const navigation = [
   ['Dashboard', '/dashboard', CircleGauge], ['Fleet', '/fleet', Layers3],
@@ -45,19 +47,28 @@ const faultOptions = [
 ]
 
 function useTwin() {
-  const [twin, setTwin] = useState<Twin | null>(null)
+  const [twin, setTwin] = useState<Twin | null>(() => STATIC_DEMO ? staticSnapshot() : null)
   const [history, setHistory] = useState<Twin[]>([])
-  const [fleet, setFleet] = useState<Twin[]>([])
-  const [connected, setConnected] = useState(false)
+  const [fleet, setFleet] = useState<Twin[]>(() => STATIC_DEMO ? staticFleet() : [])
+  const [connected, setConnected] = useState(STATIC_DEMO)
   const [error, setError] = useState('')
 
   const refreshFleet = useCallback(async () => {
+    if (STATIC_DEMO) { setFleet(staticFleet()); return }
     const response = await fetch(api('/api/fleet'))
     if (!response.ok) throw new Error(`Fleet refresh failed (${response.status})`)
     setFleet(await response.json())
   }, [])
 
   const hydrate = useCallback(async () => {
+    if (STATIC_DEMO) {
+      const current = staticSnapshot()
+      setTwin(current)
+      setFleet(staticFleet())
+      setHistory(previous => [...previous, current].slice(-180))
+      setError('')
+      return
+    }
     try {
       const [engine, health, telemetry, prediction, mission, maintenance, alerts, snapshots, vehicles] = await Promise.all(
         ['/api/engine', '/api/health', '/api/telemetry/latest', '/api/prediction', '/api/mission', '/api/maintenance', '/api/alerts', '/api/history?limit=180', '/api/fleet']
@@ -73,6 +84,15 @@ function useTwin() {
   }, [])
 
   useEffect(() => {
+    if (STATIC_DEMO) {
+      const timer = window.setInterval(() => {
+        const current = staticTick()
+        setTwin(current)
+        setFleet(staticFleet())
+        setHistory(previous => [...previous, current].slice(-180))
+      }, 1000)
+      return () => clearInterval(timer)
+    }
     hydrate()
     let socket: WebSocket | undefined
     let retry: number | undefined
@@ -96,6 +116,14 @@ function useTwin() {
   }, [hydrate, refreshFleet])
 
   const command = useCallback(async (path: string, body?: unknown) => {
+    if (STATIC_DEMO) {
+      const result = staticCommand(path, body)
+      setTwin(result)
+      setFleet(staticFleet())
+      if (path === '/api/fleet/select') setHistory([result])
+      else setHistory(previous => [...previous, result].slice(-180))
+      return result
+    }
     const response = await fetch(api(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
     if (!response.ok) throw new Error(`Command failed (${response.status})`)
     const result = await response.json()
@@ -112,6 +140,16 @@ function useTwin() {
   }, [refreshFleet])
 
   const controlVehicle = useCallback(async (engineId: string, action: string, fault?: string) => {
+    if (STATIC_DEMO) {
+      const vehicles = staticControlVehicle(engineId, action, fault)
+      setFleet(vehicles)
+      if (engineId === twin?.engine_id) {
+        const current = staticSnapshot(engineId)
+        setTwin(current)
+        setHistory(previous => [...previous, current].slice(-180))
+      }
+      return
+    }
     const isFault = action === 'fault'
     const path = isFault ? `/api/fleet/${encodeURIComponent(engineId)}/fault` : `/api/fleet/${encodeURIComponent(engineId)}/control`
     const body = isFault ? { fault } : { action }
@@ -130,13 +168,19 @@ function useTwin() {
 }
 
 function navigate(path: string) {
+  if (STATIC_DEMO) {
+    history.pushState({}, '', `#${path}`)
+    window.dispatchEvent(new Event('popstate'))
+    return
+  }
   history.pushState({}, '', path)
   window.dispatchEvent(new Event('popstate'))
 }
 
 function usePath() {
-  const [path, setPath] = useState(location.pathname)
-  useEffect(() => { const change = () => setPath(location.pathname); addEventListener('popstate', change); return () => removeEventListener('popstate', change) }, [])
+  const readPath = () => STATIC_DEMO ? (location.hash.slice(1) || '/') : location.pathname
+  const [path, setPath] = useState(readPath)
+  useEffect(() => { const change = () => setPath(readPath()); addEventListener('popstate', change); return () => removeEventListener('popstate', change) }, [])
   return path
 }
 
@@ -366,6 +410,7 @@ function VirtualUAVPage({ twin }: any) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const load = useCallback(async () => {
+    if (STATIC_DEMO) { setUav(staticUav()); return }
     const response = await fetch(api('/api/uav'))
     if (!response.ok) throw new Error(`UAV status unavailable (${response.status})`)
     setUav(await response.json())
@@ -380,6 +425,11 @@ function VirtualUAVPage({ twin }: any) {
   const control = async (action: string) => {
     setBusy(true)
     try {
+      if (STATIC_DEMO) {
+        setUav(staticUavControl(action))
+        setError('')
+        return
+      }
       const response = await fetch(api('/api/uav/control'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) })
       if (!response.ok) throw new Error(`UAV control failed (${response.status})`)
       setUav(await response.json())
@@ -439,6 +489,10 @@ function DataLabPage() {
     setBusy(true)
     setError('')
     try {
+      if (STATIC_DEMO) {
+        setResult(staticCsvAnalysis(filename, csvText))
+        return
+      }
       const response = await fetch(api('/api/telemetry/analyze-csv'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ filename, csv_text: csvText }) })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.detail || `Analysis failed (${response.status})`)
@@ -472,7 +526,10 @@ function AssistantPage({ twin }: any) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const endRef = useRef<HTMLDivElement>(null)
-  useEffect(() => { fetch(api('/api/assistant/status')).then(response => response.json()).then(setStatus).catch(() => setStatus({ configured: false, provider: 'local evidence mode' })) }, [])
+  useEffect(() => {
+    if (STATIC_DEMO) { setStatus({ configured: false, provider: 'browser-only simulation' }); return }
+    fetch(api('/api/assistant/status')).then(response => response.json()).then(setStatus).catch(() => setStatus({ configured: false, provider: 'local evidence mode' }))
+  }, [])
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, busy])
   const send = async (event?: React.FormEvent) => {
     event?.preventDefault()
@@ -483,6 +540,11 @@ function AssistantPage({ twin }: any) {
     setMessages(previous => [...previous, { role: 'user', content: prompt }])
     setBusy(true)
     try {
+      if (STATIC_DEMO) {
+        const current = staticSnapshot()
+        setMessages(previous => [...previous, { role: 'assistant', content: `Engine ${current.engine_id} is ${current.health.state} at ${current.health.overall}% health. The synthetic classifier indicates ${current.prediction.predicted_fault_label} with ${current.prediction.confidence}% confidence; anomaly score is ${current.prediction.anomaly_score}/100. Cylinder temperature is ${current.telemetry.cylinder_temperature} °C, oil pressure is ${current.telemetry.oil_pressure} bar, and mission reliability is ${current.mission.reliability_score}%. Browser-only prototype response; not validated for operational use.`, source: 'local browser simulation · synthetic evidence' }])
+        return
+      }
       const response = await fetch(api('/api/assistant/chat'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt }) })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.detail || `Assistant request failed (${response.status})`)
