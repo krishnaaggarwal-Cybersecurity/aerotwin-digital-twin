@@ -1,5 +1,4 @@
 .venv/
-.venv-ncmapss/
 __pycache__/
 *.py[cod]
 backend/data/*.db
